@@ -197,6 +197,7 @@ switch (mq) {
               console.log('Time used:', timeUsed, 'ms');
               console.log('Avg Latency:', sumLatencies / latencies.length, 'ms');
               console.log('Throughput:', (messageCount / timeUsed) * 1000, 'msg/sec');
+              console.log();
 
               startTime = null;
               messageCounter = 0;
