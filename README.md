@@ -22,7 +22,7 @@
     **Example:**
 
     ```
-    node src/benchmark.js uniform receiver --mq=libp2p -c 10000
+    node src/benchmark.js uniform receiver --mq libp2p -c 10000
     ```
 
 3. Run a broker node
