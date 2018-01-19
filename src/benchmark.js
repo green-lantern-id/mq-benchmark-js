@@ -9,12 +9,13 @@ const crypto = require('crypto');
 
 const yargs = require('yargs');
 
-const { longToUint8Array, uint8ArrayToLong } = require('./utils');
+const { longToUint8Array, uint8ArrayToLong, usleep } = require('./utils');
 
 // MQ libs
 const libp2pSender = require('./mq/libp2p/sender');
 const libp2pBroker = require('./mq/libp2p/broker');
 const libp2pReceiver = require('./mq/libp2p/receiver');
+const PoissonObject = require('./poisson');
 
 const argv = yargs
   .command('uniform', 'start a test in Uniform mode', yargs => {
@@ -71,19 +72,13 @@ const argv = yargs
     yargs
       .command('sender', 'sender role', yargs => {
         yargs
-          .option('duration', {
-            alias: 'd',
-            describe: 'duration to test in minutes',
-            type: 'number',
-            demandOption: true,
-          })
           .option('brokerIp', {
             describe: 'broker node IP address',
             type: 'string',
             demandOption: true,
           })
           .option('avgSize', {
-            describe: 'Average message size in KB',
+            describe: 'Average message size in Byte',
             type: 'number',
           })
           .option('avgDelay', {
@@ -97,6 +92,11 @@ const argv = yargs
           .option('messageCount', {
             alias: 'c',
             describe: 'Number of messages to send (Default will send message forever)',
+            type: 'number',
+          })
+          .option('messageSize', {
+            alias: 's',
+            describe: 'message size to test in bytes (if avgSize is not specified)',
             type: 'number',
           })
           // .option('brokerPort', {
@@ -118,7 +118,14 @@ const argv = yargs
           //   demandOption: true,
           // });
       })
-      .command('receiver', 'receiver role')
+      .command('receiver', 'receiver role', yargs => {
+        yargs.option('messageCount', {
+          alias: 'c',
+          describe: 'expected number of messages to receive',
+          type: 'number',
+          demandOption: true,
+        });
+      })
       .demandCommand(1, 'You need to specifiy a role to test');
   })
   .option('mq', {
@@ -137,6 +144,8 @@ const mq = argv.mq;
 const messageSize = argv.messageSize;
 const messageCount = argv.messageCount;
 const duration = argv.duration;
+const avgSize = argv.avgSize;
+const avgDelay = argv.avgDelay;
 
 let Sender;
 let Broker;
@@ -240,12 +249,30 @@ switch (mq) {
           brokerPort: 10002,
         });
 
-        const message = crypto.randomBytes(messageSize);
-        const messageLength = 8 + message.length;
-        for (let i = 0; i < messageCount; i++) {
-          const timestampBuf = longToUint8Array(Date.now());
-          sender.send(Buffer.concat([timestampBuf, message], messageLength));
-        };
+        const message = crypto.randomBytes((avgSize ? avgSize*2 : messageSize));
+        var randomSize,randomDelay;
+        if(avgSize) randomSize = new PoissonObject(avgSize/1024);
+        if(avgDelay) randomDelay = new PoissonObject(avgDelay);
+        let timestampBuf,messageLength,payloadLength,startTime = new Date().getTime(),counter = messageCount;
+
+        while(true) {
+          payloadLength = (avgSize ? randomSize.sample()*1024 : messageSize);
+          messageLength = 8 + payloadLength; 
+          timestampBuf = longToUint8Array(Date.now());
+
+          if(avgDelay) {
+            await usleep (1000*randomDelay.sample())
+          }
+          sender.send(
+            Buffer.concat([timestampBuf, message.slice(0,messageLength)], messageLength)
+          );
+          
+          if(counter) {
+            if(--counter === 0) break;
+          }
+          if(duration && duration*1000 <= new Date().getTime() - startTime) break;
+
+        }
 
         break;
       }
@@ -266,6 +293,7 @@ switch (mq) {
         let startTime = null;
         let messageCounter = 0;
         let latencies = [];
+        let sumSize = 0;
 
         const receiver = new Receiver();
         await receiver.setup({
@@ -282,6 +310,7 @@ switch (mq) {
             }
 
             messageCounter++;
+            sumSize += (msg.data.length - 8)/1024;
 
             if (messageCounter === messageCount) {
               console.log(new Date(), '>>> FINISH TESTING');
@@ -291,9 +320,12 @@ switch (mq) {
               console.log('Time used:', timeUsed, 'ms');
               console.log('Avg Latency:', sumLatencies / latencies.length, 'ms');
               console.log('Throughput:', (messageCount / timeUsed) * 1000, 'msg/sec');
+              console.log('Data received:', sumSize, 'KB');
+              console.log('Throughput:', (sumSize / timeUsed) * 1000, 'KB/sec');
               console.log();
 
               startTime = null;
+              sumSize = 0;
               messageCounter = 0;
               latencies = [];
               receiver.signalFinish();
