@@ -7,6 +7,12 @@
 
 ## How to use
 
+#### Install dependencies
+
+```
+npm install
+```
+
 #### Run a receiver node
 
 ```
