@@ -64,7 +64,7 @@ Benchmark result will be printed to the console on receiver node.
     **Example:**
 
     ```
-    docker run -it \
+    docker run -it --rm \
       -e TEST_MODE='uniform' \
       -e ROLE='receiver' \
       -e MESSAGE_QUEUE='libp2p' \
@@ -77,7 +77,7 @@ Benchmark result will be printed to the console on receiver node.
     **Example:**
 
     ```
-    docker run -it \
+    docker run -it --rm \
       -e TEST_MODE='uniform' \
       -e ROLE='broker' \
       -e MESSAGE_QUEUE='libp2p' \
@@ -90,7 +90,7 @@ Benchmark result will be printed to the console on receiver node.
     **Example:**
 
     ```
-    docker run -it \
+    docker run -it --rm \
       -e TEST_MODE='uniform' \
       -e ROLE='sender' \
       -e MESSAGE_QUEUE='libp2p' \
