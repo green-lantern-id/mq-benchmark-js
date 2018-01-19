@@ -141,27 +141,30 @@ switch (mq) {
         ip: '0.0.0.0',
         port: 20002,
         messageHandler: (msg) => {
-          const timestamp = uint8ArrayToLong(msg.data.slice(0, 8));
+          const timestamp = uint8ArrayToLong(msg.data.slice(0, 8)); // First 8 bytes is timestamp from sender
           latencies.push(Date.now() - timestamp);
           // console.log(msg.from, msg.data.toString())
           
           if (messageCounter === 0) {
             startTime = timestamp;
-            console.log('>>> START');
+            console.log(new Date(), '>>> START TESTING');
           }
 
           messageCounter++;
 
           if (messageCounter === messageCount) {
-            console.log('>>> FINISH');
+            console.log(new Date(), '>>> FINISH TESTING');
             console.log('Message Received:', messageCounter);
             const sumLatencies = latencies.reduce((a, b) => a + b, 0);
+            const timeUsed = Date.now() - startTime;
+            console.log('Time used:', timeUsed, 'ms');
             console.log('Avg Latency:', sumLatencies / latencies.length, 'ms');
-            console.log('Time used:', Date.now() - startTime, 'ms');
+            console.log('Throughput:', (messageCount / timeUsed) * 1000, 'msg/sec');
 
             startTime = null;
             messageCounter = 0;
             latencies = [];
+            receiver.signalFinish();
           }
         }
       });
