@@ -82,6 +82,23 @@ const argv = yargs
             type: 'string',
             demandOption: true,
           })
+          .option('avgSize', {
+            describe: 'Average message size in KB',
+            type: 'number',
+          })
+          .option('avgDelay', {
+            describe: 'Average delay between message in Microsecond',
+            type: 'number',
+          })
+          .option('duration', {
+            describe: 'How long this test last in second (Default will send message forever)',
+            type: 'number',
+          })
+          .option('messageCount', {
+            alias: 'c',
+            describe: 'Number of messages to send (Default will send message forever)',
+            type: 'number',
+          })
           // .option('brokerPort', {
           //   describe: 'broker port IP address',
           //   type: 'number',
@@ -213,6 +230,81 @@ switch (mq) {
         console.log('Invalid role');
     }
   } else if (mode === 'poisson') {
-    console.log('Not Implemented');
+    switch (role) {
+      case 'sender': {
+        const sender = new Sender();
+        await sender.setup({
+          ip: '0.0.0.0',
+          port: 10001,
+          brokerIp: argv.brokerIp,
+          brokerPort: 10002,
+        });
+
+        const message = crypto.randomBytes(messageSize);
+        const messageLength = 8 + message.length;
+        for (let i = 0; i < messageCount; i++) {
+          const timestampBuf = longToUint8Array(Date.now());
+          sender.send(Buffer.concat([timestampBuf, message], messageLength));
+        };
+
+        break;
+      }
+      case 'broker': {
+        const broker = new Broker();
+        await broker.setup({
+          ipNetwork1: '0.0.0.0',
+          portNetwork1: 10002,
+          ipNetwork2: '0.0.0.0',
+          portNetwork2: 20001,
+          receiverIp: argv.receiverIp,
+          receiverPort: 20002,
+        });
+
+        break;
+      }
+      case 'receiver': {
+        let startTime = null;
+        let messageCounter = 0;
+        let latencies = [];
+
+        const receiver = new Receiver();
+        await receiver.setup({
+          ip: '0.0.0.0',
+          port: 20002,
+          messageHandler: (msg) => {
+            const timestamp = uint8ArrayToLong(msg.data.slice(0, 8)); // First 8 bytes is timestamp from sender
+            latencies.push(Date.now() - timestamp);
+            // console.log(msg.from, msg.data.toString())
+            
+            if (messageCounter === 0) {
+              startTime = timestamp;
+              console.log(new Date(), '>>> START TESTING');
+            }
+
+            messageCounter++;
+
+            if (messageCounter === messageCount) {
+              console.log(new Date(), '>>> FINISH TESTING');
+              console.log('Message Received:', messageCounter);
+              const sumLatencies = latencies.reduce((a, b) => a + b, 0);
+              const timeUsed = Date.now() - startTime;
+              console.log('Time used:', timeUsed, 'ms');
+              console.log('Avg Latency:', sumLatencies / latencies.length, 'ms');
+              console.log('Throughput:', (messageCount / timeUsed) * 1000, 'msg/sec');
+              console.log();
+
+              startTime = null;
+              messageCounter = 0;
+              latencies = [];
+              receiver.signalFinish();
+            }
+          }
+        });
+
+        break;
+      }
+      default:
+        console.log('Invalid role');
+    }
   }
 })();
