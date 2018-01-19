@@ -50,3 +50,52 @@
     ```
 
 Benchmark result will be printed to the console on receiver node.
+
+## Use with Docker
+
+- Build an image
+    
+    ```
+    docker build -t green-lantern/mq-benchmark-js:0.1 .
+    ```
+
+- Receiver
+
+    **Example:**
+
+    ```
+    docker run -it \
+      -e TEST_MODE='uniform' \
+      -e ROLE='receiver' \
+      -e MESSAGE_QUEUE='libp2p' \
+      -e MESSAGE_COUNT='1000' \
+      green-lantern/mq-benchmark-js:0.1
+    ```
+
+- Broker
+    
+    **Example:**
+
+    ```
+    docker run -it \
+      -e TEST_MODE='uniform' \
+      -e ROLE='broker' \
+      -e MESSAGE_QUEUE='libp2p' \
+      -e RECEIVER_IP='172.17.0.2' \
+      green-lantern/mq-benchmark-js:0.1
+    ```
+
+- Sender
+
+    **Example:**
+
+    ```
+    docker run -it \
+      -e TEST_MODE='uniform' \
+      -e ROLE='sender' \
+      -e MESSAGE_QUEUE='libp2p' \
+      -e MESSAGE_COUNT='1000' \
+      -e MESSAGE_SIZE='1000' \
+      -e BROKER_IP='172.17.0.3' \
+      green-lantern/mq-benchmark-js:0.1
+    ```

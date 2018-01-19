@@ -5,6 +5,13 @@ COPY . /mq-benchmark-js
 
 WORKDIR /mq-benchmark-js
 
+RUN apk add --update \
+    bash \
+    make \
+    g++ \
+    git \
+    python
+
 RUN npm install
 
-ENTRYPOINT ["/mq-benchmark-js/src/benchmark.js", "$TEST_MODE", "$ROLE", "-c", "$MESSAGE_COUNT", "-s", "$MESSAGE_SIZE", "--brokerIp", "$BROKER_IP", "--receiverIp", "$RECEIVER_IP", "-d", "$DURATION"]
+CMD node /mq-benchmark-js/src/benchmark.js $TEST_MODE $ROLE --mq $MESSAGE_QUEUE -c $MESSAGE_COUNT -s $MESSAGE_SIZE --brokerIp $BROKER_IP --receiverIp $RECEIVER_IP -d $DURATION

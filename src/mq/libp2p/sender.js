@@ -44,6 +44,9 @@ class LibP2PSender {
           const dataStr = msg.data.toString();
           if (dataStr === 'finish') {
             await this.teardown();
+
+            console.log(new Date(), '[SENDER]:', 'Finish benchmarking.');
+
             // Somehow there is still a opened connection after calling teardown
             // Need to explicitly exit the process
             process.exit(0);
