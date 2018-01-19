@@ -7,44 +7,46 @@
 
 ## How to use
 
-#### Install dependencies
+1. Install dependencies
 
-```
-npm install
-```
+    ```
+    npm install
+    ```
 
-#### Run a receiver node
+2. Run a receiver node
 
-```
-node src/benchmark.js <TEST_MODE> --mq=<MESSAGE_QUEUE_LIB> -r=receiver -c <EXPECTED_MESSAGE_COUNT>
-```
+    ```
+    node src/benchmark.js <TEST_MODE> receiver --mq <MESSAGE_QUEUE_LIB> -c <EXPECTED_MESSAGE_COUNT>
+    ```
 
-**Example:**
+    **Example:**
 
-```
-node src/benchmark.js uniform --mq=libp2p -r=receiver -c 10000
-```
+    ```
+    node src/benchmark.js uniform receiver --mq=libp2p -c 10000
+    ```
 
-#### Run a broker node
+3. Run a broker node
 
-```
-node src/benchmark.js <TEST_MODE> --mq=<MESSAGE_QUEUE_LIB> -r=broker
-```
+    ```
+    node src/benchmark.js <TEST_MODE> broker --mq <MESSAGE_QUEUE_LIB> --receiverIp <RECEIVER_IP>
+    ```
 
-**Example:**
+    **Example:**
 
-```
-node src/benchmark.js uniform --mq=libp2p -r=broker
-```
+    ```
+    node src/benchmark.js uniform broker --mq libp2p --receiverIp 127.0.0.1
+    ```
 
-#### Run a sender node
+4. Run a sender node
 
-```
-node src/benchmark.js uniform --mq=<MESSAGE_QUEUE_LIB> -r=sender -s <MESSAGE_SIZE_IN_BYTES> -c <MESSAGE_COUNT>
-```
+    ```
+    node src/benchmark.js <TEST_MODE> sender --mq <MESSAGE_QUEUE_LIB> -s <MESSAGE_SIZE_IN_BYTES> -c <MESSAGE_COUNT> --brokerIp <BROKER_IP>
+    ```
 
-**Example:**
+    **Example:**
 
-```
-node src/benchmark.js uniform --mq=libp2p -r=sender -s 1000 -c 10000
-```
+    ```
+    node src/benchmark.js uniform sender --mq libp2p -s 1000 -c 10000 --brokerIp 127.0.0.1
+    ```
+
+Benchmark result will be printed to the console on receiver node.
