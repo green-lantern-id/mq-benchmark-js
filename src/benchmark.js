@@ -249,6 +249,8 @@ switch (mq) {
           brokerPort: 10002,
         });
 
+        if(!avgSize && !avgDelay) console.log("\n===\nNo avgSize or avgDelay specified, will behave like uniform.\n===\n");
+
         const message = crypto.randomBytes((avgSize ? avgSize*2 : messageSize));
         var randomSize,randomDelay;
         if(avgSize) randomSize = new PoissonObject(avgSize/1024);
