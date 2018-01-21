@@ -20,6 +20,7 @@
     "libp2p-spdy": "^0.11.0",
     "libp2p-tcp": "^0.11.2",
     "libp2p-websockets": "^0.10.4",
+    "nanotimer": "^0.3.15",
     "yargs": "^10.1.1"
   }
 }

@@ -1,6 +1,10 @@
 'use strict'
 
+const nanoTimer = require('nanotimer');
+const nanoTimerObject = new nanoTimer();
+
 const sleep = (ms = 0) => new Promise(resolve => setTimeout(resolve, ms));
+const usleep = (us = 0) => new Promise(resolve => nanoTimerObject.setTimeout(resolve, us));
 
 const longToUint8Array = (long) => {
   const byteArray = new Uint8Array(8);
@@ -22,6 +26,7 @@ const uint8ArrayToLong = (byteArray) => {
 
 module.exports = {
   sleep,
+  usleep,
   longToUint8Array,
   uint8ArrayToLong,
 };

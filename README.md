@@ -47,6 +47,7 @@
 
     ```
     node src/benchmark.js uniform sender --mq libp2p -s 1000 -c 10000 --brokerIp 127.0.0.1
+    node src/benchmark.js poisson sender --mq libp2p --avgSize 1000 -c 10000 --avgDelay 1000 --brokerIp 127.0.0.1 //avgDelay is in microsecond
     ```
 
 Benchmark result will be printed to the console on receiver node.
