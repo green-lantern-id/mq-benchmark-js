@@ -108,6 +108,7 @@ const argv = yargs
             type: 'number',
           })
           .option('duration', {
+            alias: 'd',
             describe:
               'How long this test last in second (Default will send message forever)',
             type: 'number',
@@ -152,12 +153,13 @@ const argv = yargs
           alias: 'c',
           describe: 'expected number of messages to receive',
           type: 'number',
+        })
+        .option('duration', {
+          alias: 'd',
+          describe:
+            'How long this test last in second (Default will send message forever)',
+          type: 'number',
         });
-      })
-      .option('duration', {
-        describe:
-          'How long this test last in second (Default will send message forever)',
-        type: 'number',
       })
       .demandCommand(1, 'You need to specifiy a role to test');
   })
@@ -230,6 +232,11 @@ switch (mq) {
           console.log('Invalid parameter');
           process.exit(0);
         }
+
+        // End message (timestamp = 0)
+        const timestampBuf = longToUint8Array(0);
+        sender.send(Buffer.concat([timestampBuf], 8));
+
         const timeUsed = Date.now() - startTime;
 
         console.log('\n===== TEST RESULT (SENDER) =====');
@@ -241,10 +248,6 @@ switch (mq) {
           'msg/sec'
         );
         console.log('================================\n');
-
-        // End message (timestamp = 0)
-        const timestampBuf = longToUint8Array(0);
-        sender.send(Buffer.concat([timestampBuf], 8));
 
         break;
       }
@@ -276,7 +279,7 @@ switch (mq) {
           brokerPort: 20001,
           messageHandler: msg => {
             const timestamp = uint8ArrayToLong(msg.slice(0, 8)); // First 8 bytes is timestamp from sender
-            if (timestamp > 0) latencies.push(Date.now() - timestamp);
+            if (msg.length > 8) latencies.push(Date.now() - timestamp);
             // console.log(msg.from, msg.data.toString())
 
             if (messageCounter === 0) {
@@ -284,7 +287,7 @@ switch (mq) {
               console.log(new Date(), '>>> START TESTING (First message received)');
             }
 
-            if (timestamp === 0) {
+            if (msg.length === 8) {
               console.log(new Date(), '>>> FINISH TESTING (Last message received)');
               const sumLatencies = latencies.reduce((a, b) => a + b, 0);
               const timeUsed = Date.now() - startTime;
