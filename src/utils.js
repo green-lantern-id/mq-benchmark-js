@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 const nanoTimer = require('nanotimer');
 const nanoTimerObject = new nanoTimer();
@@ -14,7 +14,7 @@ const longToUint8Array = (long) => {
     long = (long - byte) / 256;
   }
   return byteArray;
-}
+};
 
 const uint8ArrayToLong = (byteArray) => {
   let value = 0;
