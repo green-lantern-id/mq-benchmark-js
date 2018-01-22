@@ -52,8 +52,11 @@
          -s <MESSAGE_SIZE_IN_BYTES> \
          -c <MESSAGE_COUNT> \
          -d <DURATION_IN_SECONDS> \
+         --delay <DELAY_IN_MICROSECONDS> \
          --brokerIp <BROKER_IP>
     ```
+
+    `delay`: Delay between message transmissions in microseconds
 
     **Example:**
 
@@ -63,6 +66,10 @@
 
     ```
     node src/benchmark.js uniform sender --mq libp2p -s 1000 -d 3 --brokerIp 127.0.0.1
+    ```
+
+    ```
+    node src/benchmark.js uniform sender --mq libp2p -s 1000 -d 2 --delay 100 --brokerIp 127.0.0.1
     ```
 
     #### Poisson
@@ -143,6 +150,18 @@ Benchmark result will be printed to the console on sender and receiver nodes.
       -e ROLE='sender' \
       -e MESSAGE_QUEUE='libp2p' \
       -e DURATION='3' \
+      -e MESSAGE_SIZE='1000' \
+      -e BROKER_IP='172.17.0.3' \
+      green-lantern/mq-benchmark-js:0.1
+    ```
+
+    ```
+    docker run -it --rm \
+      -e TEST_MODE='uniform' \
+      -e ROLE='sender' \
+      -e MESSAGE_QUEUE='libp2p' \
+      -e DURATION='2' \
+      -e DELAY='100' \
       -e MESSAGE_SIZE='1000' \
       -e BROKER_IP='172.17.0.3' \
       green-lantern/mq-benchmark-js:0.1

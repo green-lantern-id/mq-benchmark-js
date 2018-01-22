@@ -39,6 +39,11 @@ const argv = yargs
             type: 'number',
             demandOption: true,
           })
+          .option('delay', {
+            describe: 'delay between message transmissions in microseconds (10^-6)',
+            type: 'number',
+            default: 0,
+          })
           .option('duration', {
             alias: 'd',
             describe: 'How long this test last in second (Default: 60000)',
@@ -103,7 +108,7 @@ const argv = yargs
           })
           .option('avgDelay', {
             describe:
-              'Average delay between message in Microsecond (min 1, max 1000)',
+              'Average delay between message in microsecond (10^-6) (min 1, max 1000)',
             type: 'number',
           })
           .option('duration', {
@@ -177,6 +182,7 @@ const role = argv._[1];
 const mq = argv.mq;
 const messageSize = argv.messageSize;
 const messageCount = argv.messageCount;
+const delay = argv.delay;
 const duration = argv.duration;
 const avgSize = argv.avgSize;
 const avgDelay = argv.avgDelay;
@@ -220,6 +226,9 @@ switch (mq) {
             const timestampBuf = longToUint8Array(Date.now());
             sender.send(Buffer.concat([timestampBuf, message], messageLength));
             messageCounter++;
+            if (delay !== 0) {
+              await usleep(delay);
+            }
           }
         } else if (duration) {
           const durationInSecond = duration * 1000;
@@ -227,6 +236,9 @@ switch (mq) {
             const timestampBuf = longToUint8Array(Date.now());
             sender.send(Buffer.concat([timestampBuf, message], messageLength));
             messageCounter++;
+            if (delay !== 0) {
+              await usleep(delay);
+            }
           }
         } else {
           console.log('Missing parameter. Need to specify either "messageCount" or "duration".');

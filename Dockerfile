@@ -19,6 +19,7 @@ CMD node /mq-benchmark-js/src/benchmark.js $TEST_MODE $ROLE \
     -c $MESSAGE_COUNT \
     -s $MESSAGE_SIZE \
     -d $DURATION \
+    --delay $DELAY \
     --avgDelay $AVG_DELAY \
     --avgSize $AVG_SIZE \
     --brokerIp $BROKER_IP \
