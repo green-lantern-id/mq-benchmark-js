@@ -31,13 +31,20 @@ const argv = yargs
             alias: 'c',
             describe: 'number of messages to send',
             type: 'number',
-            demandOption: true,
+            // demandOption: true,
           })
           .option('messageSize', {
             alias: 's',
             describe: 'message size to test in bytes',
             type: 'number',
             demandOption: true,
+          })
+          .option('duration', {
+            alias: 'd',
+            describe: 'How long this test last in second (Default: 60000)',
+            type: 'number',
+            default: 60000,
+            // demandOption: true,
           })
           .option('brokerIp', {
             describe: 'broker node IP address',
@@ -72,7 +79,7 @@ const argv = yargs
           alias: 'c',
           describe: 'expected number of messages to receive',
           type: 'number',
-          demandOption: true,
+          // demandOption: true,
         })
         .option('brokerIp', {
           describe: 'broker node IP address',
@@ -204,20 +211,39 @@ switch (mq) {
         const message = crypto.randomBytes(messageSize);
         const messageLength = 8 + message.length;
         const startTime = Date.now();
-        for (let i = 0; i < messageCount; i++) {
-          const timestampBuf = longToUint8Array(Date.now());
-          sender.send(Buffer.concat([timestampBuf, message], messageLength));
+        let messageCounter = 0;
+        if (messageCount) {
+          for (let i = 0; i < messageCount; i++) {
+            const timestampBuf = longToUint8Array(Date.now());
+            sender.send(Buffer.concat([timestampBuf, message], messageLength));
+            messageCounter++;
+          }
+        } else if (duration) {
+          const durationInSecond = duration * 1000;
+          while (Date.now() - startTime < durationInSecond) {
+            const timestampBuf = longToUint8Array(Date.now());
+            sender.send(Buffer.concat([timestampBuf, message], messageLength));
+            messageCounter++;
+          }
+        } else {
+          console.log('Invalid parameter');
+          process.exit(0);
         }
         const timeUsed = Date.now() - startTime;
 
         console.log('\n===== TEST RESULT (SENDER) =====');
+        console.log('Message Sent:', messageCounter);
         console.log('Time used:', timeUsed, 'ms');
         console.log(
           'Throughput:',
-          messageCount / timeUsed * 1000,
+          (messageCount || messageCounter) / timeUsed * 1000,
           'msg/sec'
         );
         console.log('================================\n');
+
+        // End message (timestamp = 0)
+        const timestampBuf = longToUint8Array(0);
+        sender.send(Buffer.concat([timestampBuf], 8));
 
         break;
       }
@@ -249,7 +275,7 @@ switch (mq) {
           brokerPort: 20001,
           messageHandler: msg => {
             const timestamp = uint8ArrayToLong(msg.slice(0, 8)); // First 8 bytes is timestamp from sender
-            latencies.push(Date.now() - timestamp);
+            if (timestamp > 0) latencies.push(Date.now() - timestamp);
             // console.log(msg.from, msg.data.toString())
 
             if (messageCounter === 0) {
@@ -257,15 +283,13 @@ switch (mq) {
               console.log(new Date(), '>>> START TESTING (First message received)');
             }
 
-            messageCounter++;
-
-            if (messageCounter === messageCount) {
+            if (timestamp === 0) {
               console.log(new Date(), '>>> FINISH TESTING (Last message received)');
-              console.log('Message Received:', messageCounter);
               const sumLatencies = latencies.reduce((a, b) => a + b, 0);
               const timeUsed = Date.now() - startTime;
               
               console.log('\n===== TEST RESULT (RECEIVER) =====');
+              console.log('Message Received:', messageCounter);
               console.log('Time used:', timeUsed, 'ms');
               console.log(
                 'Avg Latency:',
@@ -274,7 +298,7 @@ switch (mq) {
               );
               console.log(
                 'Throughput:',
-                messageCount / timeUsed * 1000,
+                messageCounter / timeUsed * 1000,
                 'msg/sec'
               );
               console.log('================================\n');
@@ -283,7 +307,10 @@ switch (mq) {
               messageCounter = 0;
               latencies = [];
               receiver.signalFinish();
+              return;
             }
+
+            messageCounter++;
           },
         });
 
