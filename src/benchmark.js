@@ -279,7 +279,7 @@ switch (mq) {
           sender.send(
             Buffer.concat([timestampBuf, message.slice(0,messageLength)], messageLength)
           );
-console.log(duration,startTime,Date.now() - startTime)          
+//console.log(duration,startTime,Date.now() - startTime)          
           if(counter) {
             if(--counter === 0) break;
           }
