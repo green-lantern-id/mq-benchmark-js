@@ -43,7 +43,6 @@ const argv = yargs
             alias: 'd',
             describe: 'How long this test last in second (Default: 60000)',
             type: 'number',
-            default: 60000,
             // demandOption: true,
           })
           .option('brokerIp', {
@@ -229,7 +228,7 @@ switch (mq) {
             messageCounter++;
           }
         } else {
-          console.log('Invalid parameter');
+          console.log('Missing parameter. Need to specify either "messageCount" or "duration".');
           process.exit(0);
         }
 
