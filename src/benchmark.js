@@ -82,7 +82,7 @@ const argv = yargs
             type: 'number',
           })
           .option('avgDelay', {
-            describe: 'Average delay between message in Microsecond',
+            describe: 'Average delay between message in Microsecond (min 1, max 1000)',
             type: 'number',
           })
           .option('duration', {
@@ -104,6 +104,10 @@ const argv = yargs
           //   type: 'number',
           //   demandOption: true,
           // });
+          .check(function(argv) {
+            if(argv.avgDelay > 1000 || argv.avgDelay < 1) return false;
+            return true;
+          },false)
       })
       .command('broker', 'broker role', yargs => {
         yargs
@@ -123,8 +127,11 @@ const argv = yargs
           alias: 'c',
           describe: 'expected number of messages to receive',
           type: 'number',
-          demandOption: true,
         });
+      })
+      .option('duration', {
+        describe: 'How long this test last in second (Default will send message forever)',
+        type: 'number',
       })
       .demandCommand(1, 'You need to specifiy a role to test');
   })
@@ -263,16 +270,29 @@ switch (mq) {
           timestampBuf = longToUint8Array(Date.now());
 
           if(avgDelay) {
-            await usleep (1000*randomDelay.sample());
+            //let sleepTime = randomDelay.sample();
+            //let before = process.hrtime();
+            await usleep(randomDelay.sample())
+            //await usleep(sleepTime)
+            //console.log(process.hrtime(before),sleepTime);
           }
           sender.send(
             Buffer.concat([timestampBuf, message.slice(0,messageLength)], messageLength)
           );
-          
+console.log(duration,startTime,Date.now() - startTime)          
           if(counter) {
             if(--counter === 0) break;
           }
-          if(duration && duration*1000 <= new Date().getTime() - startTime) break;
+//console.log(duration,startTime,new Date().getTime()-startTime);
+          if(duration && (duration*1000 <= Date.now() - startTime)) {
+            payloadLength = (avgSize ? randomSize.sample()*1024 : messageSize);
+            messageLength = 8 + payloadLength; 
+            timestampBuf = longToUint8Array(Date.now());
+            sender.send(
+              Buffer.concat([timestampBuf, message.slice(0,messageLength)], messageLength)
+            );
+            break;
+          }
 
         }
 
@@ -314,14 +334,16 @@ switch (mq) {
             messageCounter++;
             sumSize += (msg.data.length - 8)/1024;
 
-            if (messageCounter === messageCount) {
+            if (messageCounter === messageCount ||
+              (duration && (duration*1000 <= timestamp - startTime))
+            ) {
               console.log(new Date(), '>>> FINISH TESTING');
               console.log('Message Received:', messageCounter);
               const sumLatencies = latencies.reduce((a, b) => a + b, 0);
               const timeUsed = Date.now() - startTime;
               console.log('Time used:', timeUsed, 'ms');
               console.log('Avg Latency:', sumLatencies / latencies.length, 'ms');
-              console.log('Throughput:', (messageCount / timeUsed) * 1000, 'msg/sec');
+              console.log('Throughput:', (messageCounter / timeUsed) * 1000, 'msg/sec');
               console.log('Data received:', sumSize, 'KB');
               console.log('Throughput:', (sumSize / timeUsed) * 1000, 'KB/sec');
               console.log();
