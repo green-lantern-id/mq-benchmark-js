@@ -32,13 +32,11 @@
     node src/benchmark.js <TEST_MODE> broker --mq <MESSAGE_QUEUE_LIB> --receiverIp <RECEIVER_IP>
     ```
 
-    **Example (Uniform):**
+    **Example:**
 
     ```
     node src/benchmark.js uniform broker --mq libp2p --receiverIp 127.0.0.1
     ```
-
-    **Example (Poisson):**
 
     ```
     node src/benchmark.js poisson broker --mq libp2p --receiverIp 127.0.0.1
@@ -49,7 +47,12 @@
     #### Uniform
 
     ```
-    node src/benchmark.js <TEST_MODE> sender --mq <MESSAGE_QUEUE_LIB> -s <MESSAGE_SIZE_IN_BYTES> -c <MESSAGE_COUNT> -d <DURATION_IN_SECONDS> --brokerIp <BROKER_IP>
+    node src/benchmark.js <TEST_MODE> sender \
+         --mq <MESSAGE_QUEUE_LIB> \
+         -s <MESSAGE_SIZE_IN_BYTES> \
+         -c <MESSAGE_COUNT> \
+         -d <DURATION_IN_SECONDS> \
+         --brokerIp <BROKER_IP>
     ```
 
     **Example:**
@@ -65,7 +68,12 @@
     #### Poisson
 
      ```
-    node src/benchmark.js <TEST_MODE> sender --mq <MESSAGE_QUEUE_LIB> -c <MESSAGE_COUNT>  --avgSize <AVERAGE_MESSAGE_SIZE_IN_BYTES> --avgDelay <AVERAGE_DELAY_IN_MICROSECONDS> --brokerIp <BROKER_IP>
+    node src/benchmark.js <TEST_MODE> sender \
+         --mq <MESSAGE_QUEUE_LIB> \
+         -c <MESSAGE_COUNT> \
+         --avgSize <AVERAGE_MESSAGE_SIZE_IN_BYTES> \
+         --avgDelay <AVERAGE_DELAY_IN_MICROSECONDS> \
+         --brokerIp <BROKER_IP>
     ```
 
     **Example:**
@@ -90,7 +98,7 @@ Benchmark result will be printed to the console on sender and receiver nodes.
 
 - Receiver
 
-    **Example (Uniform):**
+    **Example:**
 
     ```
     docker run -it --rm \
@@ -102,7 +110,7 @@ Benchmark result will be printed to the console on sender and receiver nodes.
 
 - Broker
     
-    **Example (Uniform):**
+    **Example:**
 
     ```
     docker run -it --rm \
@@ -133,8 +141,23 @@ Benchmark result will be printed to the console on sender and receiver nodes.
       -e TEST_MODE='uniform' \
       -e ROLE='sender' \
       -e MESSAGE_QUEUE='libp2p' \
-      -e MESSAGE_COUNT='1000' \
       -e DURATION='3' \
+      -e MESSAGE_SIZE='1000' \
+      -e BROKER_IP='172.17.0.3' \
+      green-lantern/mq-benchmark-js:0.1
+    ```
+
+    **Example (Poisson):**
+
+    ```
+    docker run -it --rm \
+      -e TEST_MODE='poisson' \
+      -e ROLE='sender' \
+      -e MESSAGE_QUEUE='libp2p' \
+      -e MESSAGE_COUNT='10000' \
+      -e DURATION='10' \
+      -e AVG_DELAY='1000' \
+      -e AVG_SIZE='1000' \
       -e BROKER_IP='172.17.0.3' \
       green-lantern/mq-benchmark-js:0.1
     ```
