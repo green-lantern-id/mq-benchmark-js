@@ -71,6 +71,7 @@
     node src/benchmark.js <TEST_MODE> sender \
          --mq <MESSAGE_QUEUE_LIB> \
          -c <MESSAGE_COUNT> \
+         -d <DURATION_IN_SECONDS> \
          --avgSize <AVERAGE_MESSAGE_SIZE_IN_BYTES> \
          --avgDelay <AVERAGE_DELAY_IN_MICROSECONDS> \
          --brokerIp <BROKER_IP>
@@ -83,7 +84,7 @@
     avgDelay is in microsecond, min 1, max 1000
 
     ```
-    node src/benchmark.js poisson sender --mq libp2p -c 10000 --duration 10 --avgSize 1000 --avgDelay 1000 --brokerIp 127.0.0.1
+    node src/benchmark.js poisson sender --mq libp2p -c 10000 -d 10 --avgSize 1000 --avgDelay 1000 --brokerIp 127.0.0.1
     ```
 
 Benchmark result will be printed to the console on sender and receiver nodes.
