@@ -15,8 +15,6 @@
 
 2. Run a receiver node
 
-    #### Uniform
-
     ```
     node src/benchmark.js <TEST_MODE> receiver --mq <MESSAGE_QUEUE_LIB>
     ```
@@ -25,20 +23,6 @@
 
     ```
     node src/benchmark.js uniform receiver --mq libp2p
-    ```
-
-    #### Poisson
-
-    ```
-    node src/benchmark.js <TEST_MODE> receiver --mq <MESSAGE_QUEUE_LIB> -c <EXPECTED_MESSAGE_COUNT> -d <DURATION_IN_SECONDS>
-    ```
-
-    **Example:**
-
-    The command below: Test ends when receiver has received 10000 messages OR some message timestamp say it send after 10 seconds
-
-    ```
-    node src/benchmark.js poisson receiver --mq libp2p -c 10000 -d 10
     ```
 
 
