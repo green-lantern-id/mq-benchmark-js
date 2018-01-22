@@ -149,7 +149,7 @@ const argv = yargs
         // });
       })
       .command('receiver', 'receiver role', yargs => {
-        yargs.option('messageCount', {
+        /*yargs.option('messageCount', {
           alias: 'c',
           describe: 'expected number of messages to receive',
           type: 'number',
@@ -159,7 +159,7 @@ const argv = yargs
           describe:
             'How long this test last in second (Default will send message forever)',
           type: 'number',
-        });
+        });*/
       })
       .demandCommand(1, 'You need to specifiy a role to test');
   })
@@ -323,6 +323,7 @@ switch (mq) {
       default:
         console.log('Invalid role');
     }
+//===========================================================================================
   } else if (mode === 'poisson') {
     switch (role) {
       case 'sender': {
@@ -345,7 +346,9 @@ switch (mq) {
           messageLength,
           payloadLength,
           startTime = new Date().getTime(),
-          counter = messageCount;
+          counter = messageCount,
+          sent = 0,
+          sumSize = 0;
 
         while (true) {
           payloadLength = avgSize ? randomSize.sample() * 1024 : messageSize;
@@ -361,29 +364,40 @@ switch (mq) {
           }
           sender.send(
             Buffer.concat(
-              [timestampBuf, message.slice(0, messageLength)],
+              [timestampBuf, message.slice(0, payloadLength)],
               messageLength
             )
           );
-          //console.log(duration,startTime,Date.now() - startTime)
+          sent++;
+          sumSize += payloadLength;
           if (counter) {
             if (--counter === 0) break;
           }
-          //console.log(duration,startTime,new Date().getTime()-startTime);
           if (duration && duration * 1000 <= Date.now() - startTime) {
-            payloadLength = avgSize ? randomSize.sample() * 1024 : messageSize;
-            messageLength = 8 + payloadLength;
-            timestampBuf = longToUint8Array(Date.now());
-            sender.send(
-              Buffer.concat(
-                [timestampBuf, message.slice(0, messageLength)],
-                messageLength
-              )
-            );
             break;
           }
         }
 
+        //last message to tell receiver to stop
+        let timeUsed = Date.now() - startTime;
+        timestampBuf = longToUint8Array(0);
+        sender.send(Buffer.concat([timestampBuf],8));
+
+        console.log('\n===== TEST RESULT (SENDER) =====');
+        console.log('Message Sent:', sent);
+        console.log('Time used:', timeUsed, 'ms');
+        console.log('Data Sent:', sumSize/1024, 'KB');
+        console.log(
+          'Throughput:',
+          sent / timeUsed * 1000,
+          'msg/sec'
+        );
+        console.log(
+          'Throughput:',
+          (sumSize/1024) / timeUsed * 1000,
+          'KB/sec'
+        );
+        console.log('================================\n');
         break;
       }
       case 'broker': {
@@ -410,28 +424,25 @@ switch (mq) {
           bindIp: '0.0.0.0',
           bindPort: 20002,
           messageHandler: msg => {
-            const timestamp = uint8ArrayToLong(msg.data.slice(0, 8)); // First 8 bytes is timestamp from sender
-            latencies.push(Date.now() - timestamp);
-            // console.log(msg.from, msg.data.toString())
+            const timestamp = uint8ArrayToLong(msg.slice(0, 8)); // First 8 bytes is timestamp from sender
+            if(timestamp > 0) {
+              sumSize += msg.length - 8;
+              latencies.push(Date.now() - timestamp);
+            }
 
             if (messageCounter === 0) {
               startTime = timestamp;
               console.log(new Date(), '>>> START TESTING');
             }
 
-            messageCounter++;
-            sumSize += (msg.data.length - 8) / 1024;
-
-            if (
-              messageCounter === messageCount ||
-              (duration && duration * 1000 <= timestamp - startTime)
-            ) {
+            if (timestamp === 0) {
               console.log(new Date(), '>>> FINISH TESTING');
-              console.log('Message Received:', messageCounter);
               const sumLatencies = latencies.reduce((a, b) => a + b, 0);
               const timeUsed = Date.now() - startTime;
               console.log('\n===== TEST RESULT (RECEIVER) =====');
+              console.log('Message Received:', messageCounter);
               console.log('Time used:', timeUsed, 'ms');
+              console.log('Data received:', sumSize/1024, 'KB');
               console.log(
                 'Avg Latency:',
                 sumLatencies / latencies.length,
@@ -442,8 +453,7 @@ switch (mq) {
                 messageCounter / timeUsed * 1000,
                 'msg/sec'
               );
-              console.log('Data received:', sumSize, 'KB');
-              console.log('Throughput:', sumSize / timeUsed * 1000, 'KB/sec');
+              console.log('Throughput:', (sumSize/1024) / timeUsed * 1000, 'KB/sec');
               console.log('================================\n');
 
               startTime = null;
@@ -451,7 +461,9 @@ switch (mq) {
               messageCounter = 0;
               latencies = [];
               receiver.signalFinish();
+              return;
             }
+            messageCounter++;
           },
         });
 
