@@ -86,12 +86,15 @@
 
     **Example:**
 
+    The command below: stop send when 10000 messages sent OR some 10 seconds after first message sent
+
+    avgDelay is in microsecond, min 1, max 1000
+
     ```
-    node src/benchmark.js poisson sender --mq libp2p -c 10000 --duration 10 --avgSize 1000 --avgDelay 1000 --brokerIp 127.0.0.1 //avgDelay is in microsecond, min 1, max 1000
-    //command above will stop send when 10000 messages sent OR some 10 seconds after first message sent
+    node src/benchmark.js poisson sender --mq libp2p -c 10000 --duration 10 --avgSize 1000 --avgDelay 1000 --brokerIp 127.0.0.1
     ```
 
-Benchmark result will be printed to the console on receiver node.
+Benchmark result will be printed to the console on sender and receiver nodes.
 
 ## Use with Docker
 

@@ -279,7 +279,7 @@ switch (mq) {
           brokerPort: 20001,
           messageHandler: msg => {
             const timestamp = uint8ArrayToLong(msg.slice(0, 8)); // First 8 bytes is timestamp from sender
-            if (msg.length > 8) latencies.push(Date.now() - timestamp);
+            if (timestamp > 0) latencies.push(Date.now() - timestamp);
             // console.log(msg.from, msg.data.toString())
 
             if (messageCounter === 0) {
@@ -287,7 +287,7 @@ switch (mq) {
               console.log(new Date(), '>>> START TESTING (First message received)');
             }
 
-            if (msg.length === 8) {
+            if (timestamp === 0) {
               console.log(new Date(), '>>> FINISH TESTING (Last message received)');
               const sumLatencies = latencies.reduce((a, b) => a + b, 0);
               const timeUsed = Date.now() - startTime;
