@@ -15,6 +15,11 @@ const { longToUint8Array, uint8ArrayToLong, usleep } = require('./utils');
 const libp2pSender = require('./mq/libp2p/sender');
 const libp2pBroker = require('./mq/libp2p/broker');
 const libp2pReceiver = require('./mq/libp2p/receiver');
+
+const zeromqSender = require('./mq/zeromq/sender');
+const zeromqBroker = require('./mq/zeromq/broker');
+const zeromqReceiver = require('./mq/zeromq/receiver');
+
 const PoissonObject = require('./poisson');
 
 const argv = yargs
@@ -50,12 +55,17 @@ const argv = yargs
           describe: 'receiver node IP address',
           type: 'string',
           demandOption: true,
-        });
+        })
         // .option('receiverPort', {
         //   describe: 'receiver port IP address',
         //   type: 'number',
         //   demandOption: true,
         // });
+        .option('senderIp', {
+          describe: 'sender node IP address',
+          type: 'string',
+          // demandOption: true,
+        });
       })
       .command('receiver', 'receiver role', yargs => {
         yargs.option('messageCount', {
@@ -63,6 +73,11 @@ const argv = yargs
           describe: 'expected number of messages to receive',
           type: 'number',
           demandOption: true,
+        })
+        .option('brokerIp', {
+          describe: 'broker node IP address',
+          type: 'string',
+          // demandOption: true,
         });
       })
       .demandCommand(1, 'You need to specifiy a role to test');
@@ -141,7 +156,7 @@ const argv = yargs
   .option('mq', {
     // alias: 'mq',
     describe: 'message queue lib to use',
-    choices: ['libp2p'],
+    choices: ['libp2p', 'zeromq'],
     demandOption: true,
   })
   .demandCommand(1, 'You need to specifiy a mode to test')
@@ -165,6 +180,11 @@ switch (mq) {
     Broker = libp2pBroker;
     Receiver = libp2pReceiver;
     break;
+  case 'zeromq':
+    Sender = zeromqSender;
+    Broker = zeromqBroker;
+    Receiver = zeromqReceiver;
+    break;
   default:
     console.log('Invalid mq lib name');
 }
@@ -175,8 +195,8 @@ switch (mq) {
       case 'sender': {
         const sender = new Sender();
         await sender.setup({
-          ip: '0.0.0.0',
-          port: 10001,
+          bindIp: '0.0.0.0',
+          bindPort: 10001,
           brokerIp: argv.brokerIp,
           brokerPort: 10002,
         });
@@ -204,10 +224,12 @@ switch (mq) {
       case 'broker': {
         const broker = new Broker();
         await broker.setup({
-          ipNetwork1: '0.0.0.0',
-          portNetwork1: 10002,
-          ipNetwork2: '0.0.0.0',
-          portNetwork2: 20001,
+          bindIpNetwork1: '0.0.0.0',
+          bindPortNetwork1: 10002,
+          bindIpNetwork2: '0.0.0.0',
+          bindPortNetwork2: 20001,
+          senderIp: argv.senderIp,
+          senderPort: 10001,
           receiverIp: argv.receiverIp,
           receiverPort: 20002,
         });
@@ -221,10 +243,12 @@ switch (mq) {
 
         const receiver = new Receiver();
         await receiver.setup({
-          ip: '0.0.0.0',
-          port: 20002,
+          bindIp: '0.0.0.0',
+          bindPort: 20002,
+          brokerIp: argv.brokerIp,
+          brokerPort: 20001,
           messageHandler: msg => {
-            const timestamp = uint8ArrayToLong(msg.data.slice(0, 8)); // First 8 bytes is timestamp from sender
+            const timestamp = uint8ArrayToLong(msg.slice(0, 8)); // First 8 bytes is timestamp from sender
             latencies.push(Date.now() - timestamp);
             // console.log(msg.from, msg.data.toString())
 
@@ -273,8 +297,8 @@ switch (mq) {
       case 'sender': {
         const sender = new Sender();
         await sender.setup({
-          ip: '0.0.0.0',
-          port: 10001,
+          bindIp: '0.0.0.0',
+          bindPort: 10001,
           brokerIp: argv.brokerIp,
           brokerPort: 10002,
         });
@@ -334,10 +358,10 @@ switch (mq) {
       case 'broker': {
         const broker = new Broker();
         await broker.setup({
-          ipNetwork1: '0.0.0.0',
-          portNetwork1: 10002,
-          ipNetwork2: '0.0.0.0',
-          portNetwork2: 20001,
+          bindIpNetwork1: '0.0.0.0',
+          bindPortNetwork1: 10002,
+          bindIpNetwork2: '0.0.0.0',
+          bindPortNetwork2: 20001,
           receiverIp: argv.receiverIp,
           receiverPort: 20002,
         });
@@ -352,8 +376,8 @@ switch (mq) {
 
         const receiver = new Receiver();
         await receiver.setup({
-          ip: '0.0.0.0',
-          port: 20002,
+          bindIp: '0.0.0.0',
+          bindPort: 20002,
           messageHandler: msg => {
             const timestamp = uint8ArrayToLong(msg.data.slice(0, 8)); // First 8 bytes is timestamp from sender
             latencies.push(Date.now() - timestamp);
