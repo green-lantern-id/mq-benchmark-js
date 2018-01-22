@@ -18,7 +18,7 @@ class LibP2PReceiver {
     this.fs = new FloodSub(this.node);
     await this.fs.startAsync();
 
-    console.log(new Date(), '[RECEIVER]:', 'Started!');
+    // console.log(new Date(), '[RECEIVER]:', 'Started!');
 
     this.fs.on('test', messageHandler);
     this.fs.subscribe('test');
