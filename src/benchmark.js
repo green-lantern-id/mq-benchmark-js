@@ -130,7 +130,8 @@ const argv = yargs
           //   demandOption: true,
           // });
           .check(function(argv) {
-            if (argv.avgDelay > 1000 || argv.avgDelay < 1) return false;
+            if(argv.avgDelay && (argv.avgDelay > 1000 || argv.avgDelay < 1)) return false;
+            if(!argv.messageSize && !argv.avgSize) return false;
             return true;
           }, false);
       })
