@@ -14,12 +14,12 @@ const { createNode } = require('./helpers');
 const { sleep } = require('../../utils');
 
 class LibP2PBroker {
-  async setup({ ipNetwork1, portNetwork1, ipNetwork2, portNetwork2, receiverIp, receiverPort }) {
-    this.nodeNetwork1 = await createNode(ipNetwork1, portNetwork1, PEER_ID);
+  async setup({ bindIpNetwork1, bindPortNetwork1, bindIpNetwork2, bindPortNetwork2, receiverIp, receiverPort }) {
+    this.nodeNetwork1 = await createNode(bindIpNetwork1, bindPortNetwork1, PEER_ID);
     this.fsNetwork1 = new FloodSub(this.nodeNetwork1);
     await this.fsNetwork1.startAsync();
 
-    this.nodeNetwork2 = await createNode(ipNetwork2, portNetwork2, PEER_ID);
+    this.nodeNetwork2 = await createNode(bindIpNetwork2, bindPortNetwork2, PEER_ID);
     this.fsNetwork2 = new FloodSub(this.nodeNetwork2);
     await this.fsNetwork2.startAsync();
 

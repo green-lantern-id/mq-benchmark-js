@@ -12,15 +12,15 @@ const PEER_ID = require('./id-receiver');
 const { createNode } = require('./helpers');
 
 class LibP2PReceiver {
-  async setup({ ip, port, messageHandler }) {
-    this.node = await createNode(ip, port, PEER_ID);
+  async setup({ bindIp, bindPort, messageHandler }) {
+    this.node = await createNode(bindIp, bindPort, PEER_ID);
 
     this.fs = new FloodSub(this.node);
     await this.fs.startAsync();
 
     // console.log(new Date(), '[RECEIVER]:', 'Started!');
 
-    this.fs.on('test', messageHandler);
+    this.fs.on('test', (msg) => messageHandler(msg.data));
     this.fs.subscribe('test');
 
     console.log(new Date(), '[RECEIVER]:', 'Ready!');

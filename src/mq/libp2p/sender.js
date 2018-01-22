@@ -14,8 +14,8 @@ const { createNode } = require('./helpers');
 const { sleep } = require('../../utils');
 
 class LibP2PSender {
-  async setup({ ip, port, brokerIp, brokerPort }) {
-    this.node = await createNode(ip, port, PEER_ID);
+  async setup({ bindIp, bindPort, brokerIp, brokerPort }) {
+    this.node = await createNode(bindIp, bindPort, PEER_ID);
 
     this.fs = new FloodSub(this.node);
     await this.fs.startAsync();
