@@ -27,5 +27,6 @@ CMD node /mq-benchmark-js/src/benchmark.js $TEST_MODE $ROLE \
     --delay $DELAY \
     --avgDelay $AVG_DELAY \
     --avgSize $AVG_SIZE \
+    --senderIp $SENDER_IP \
     --brokerIp $BROKER_IP \
     --receiverIp $RECEIVER_IP

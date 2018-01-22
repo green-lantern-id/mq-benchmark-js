@@ -108,6 +108,8 @@ Benchmark result will be printed to the console on sender and receiver nodes.
 
     **Example:**
 
+    libp2p
+
     ```
     docker run -it --rm \
       -e TEST_MODE='uniform' \
@@ -116,9 +118,22 @@ Benchmark result will be printed to the console on sender and receiver nodes.
       green-lantern/mq-benchmark-js:0.1
     ```
 
+    ZeroMQ
+
+    ```
+    docker run -it --rm \
+      -e TEST_MODE='uniform' \
+      -e ROLE='receiver' \
+      -e MESSAGE_QUEUE='zeromq' \
+      -e BROKER_IP='172.17.0.3' \
+      green-lantern/mq-benchmark-js:0.1
+    ```
+
 - Broker
     
     **Example:**
+
+    libp2p
 
     ```
     docker run -it --rm \
@@ -129,9 +144,23 @@ Benchmark result will be printed to the console on sender and receiver nodes.
       green-lantern/mq-benchmark-js:0.1
     ```
 
+    ZeroMQ
+
+    ```
+    docker run -it --rm \
+      -e TEST_MODE='uniform' \
+      -e ROLE='broker' \
+      -e MESSAGE_QUEUE='zeromq' \
+      -e SENDER_IP='172.17.0.4' \
+      -e RECEIVER_IP='172.17.0.2' \
+      green-lantern/mq-benchmark-js:0.1
+    ```
+
 - Sender
 
     **Example (Uniform):**
+
+    libp2p
 
     ```
     docker run -it --rm \
@@ -162,6 +191,19 @@ Benchmark result will be printed to the console on sender and receiver nodes.
       -e MESSAGE_QUEUE='libp2p' \
       -e DURATION='2' \
       -e DELAY='100' \
+      -e MESSAGE_SIZE='1000' \
+      -e BROKER_IP='172.17.0.3' \
+      green-lantern/mq-benchmark-js:0.1
+    ```
+
+    ZeroMQ
+
+    ```
+    docker run -it --rm \
+      -e TEST_MODE='uniform' \
+      -e ROLE='sender' \
+      -e MESSAGE_QUEUE='zeromq' \
+      -e MESSAGE_COUNT='1000' \
       -e MESSAGE_SIZE='1000' \
       -e BROKER_IP='172.17.0.3' \
       green-lantern/mq-benchmark-js:0.1
