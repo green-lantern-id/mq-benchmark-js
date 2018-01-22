@@ -177,7 +177,7 @@ switch (mq) {
         for (let i = 0; i < messageCount; i++) {
           const timestampBuf = longToUint8Array(Date.now());
           sender.send(Buffer.concat([timestampBuf, message], messageLength));
-        };
+        }
 
         break;
       }
@@ -263,7 +263,7 @@ switch (mq) {
           timestampBuf = longToUint8Array(Date.now());
 
           if(avgDelay) {
-            await usleep (1000*randomDelay.sample())
+            await usleep (1000*randomDelay.sample());
           }
           sender.send(
             Buffer.concat([timestampBuf, message.slice(0,messageLength)], messageLength)

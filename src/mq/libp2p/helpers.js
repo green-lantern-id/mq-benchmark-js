@@ -1,11 +1,11 @@
-'use strict'
+'use strict';
 
 const bluebird = require('bluebird');
 
 const Bundle = require('./bundle');
 const PeerId = require('peer-id');
 const PeerInfo = require('peer-info');
-bluebird.Promise.promisifyAll([PeerId, PeerInfo])
+bluebird.Promise.promisifyAll([PeerId, PeerInfo]);
 
 const createNode = async (ip, port, peerIdJson) => {
   let node;
