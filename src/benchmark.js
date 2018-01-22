@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 process.on('unhandledRejection', function(reason, p) {
   // console.error('Unhandled Rejection:', p, '\nreason:', reason.stack || reason);
