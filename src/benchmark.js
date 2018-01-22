@@ -133,6 +133,7 @@ const argv = yargs
           .check(function(argv) {
             if(argv.avgDelay && (argv.avgDelay > 1000 || argv.avgDelay < 1)) return false;
             if(!argv.messageSize && !argv.avgSize) return false;
+            if(argv.avgSize && argv.avgSize < 1024) return false;
             return true;
           }, false);
       })
