@@ -10,7 +10,12 @@ RUN apk add --update \
     make \
     g++ \
     git \
-    python
+    python \
+    zeromq-dev \
+    musl-dev
+
+# Tell zeromq to use shared libary
+ENV npm_config_zmq_external="true"
 
 RUN npm install
 
