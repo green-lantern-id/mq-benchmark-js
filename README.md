@@ -117,7 +117,7 @@
     node src/benchmark.js poisson sender --mq libp2p -c 10000 -d 10 --avgSize 1024 --avgDelay 1000 --brokerIp 127.0.0.1
     ```
 
-Benchmark result will be printed to the console on sender and receiver nodes.
+Benchmark result will be printed to the console on sender node and written to `result.txt` file.
 
 ## Use with Docker
 

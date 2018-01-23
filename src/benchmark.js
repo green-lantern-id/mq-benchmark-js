@@ -6,6 +6,7 @@ process.on('unhandledRejection', function(reason, p) {
 });
 
 const fs = require('fs');
+const path = require('path');
 const crypto = require('crypto');
 
 const yargs = require('yargs');
@@ -283,7 +284,7 @@ const appendResultToFile = ({ filename, datetime, benchmarkDetails, senderResult
   });
 
   try {
-    fs.appendFileSync(filename, `${stringToWrite}\n`);
+    fs.appendFileSync(path.resolve(__dirname, filename), `${stringToWrite}\n`);
   } catch (err) {
     console.error('Error appending result to file');
   }
