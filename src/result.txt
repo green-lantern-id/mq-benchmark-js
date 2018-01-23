@@ -1,0 +1,127 @@
+===== MQ BENCHMARK RESULT =====
+Tue Jan 23 2018 12:00:06 GMT+0700 (+07)
+
+MQ: libp2p
+Distribution: uniform
+Message count: 1000
+Message size: 1000
+
+***** SENDER *****
+Message sent: 1000
+Time used: 159 ms
+Data sent: 984.375 KiB
+Throughput: 6289.30817610063 msg/sec
+Throughput: 6191.037735849057 KiB/sec
+
+***** RECEIVER *****
+Message received: 1000
+Time used: 159 ms
+Data received: 984.375 KiB
+Avg latency: 1.197 ms
+Throughput: 6289.30817610063 msg/sec
+Throughput: 6191.037735849057 KiB/sec
+
+========================
+
+===== MQ BENCHMARK RESULT =====
+Tue Jan 23 2018 12:00:12 GMT+0700 (+07)
+
+MQ: libp2p
+Distribution: uniform
+Message count: 1000
+Message size: 1000
+
+***** SENDER *****
+Message sent: 1000
+Time used: 166 ms
+Data sent: 984.375 KiB
+Throughput: 6024.096385542169 msg/sec
+Throughput: 5929.969879518072 KiB/sec
+
+***** RECEIVER *****
+Message received: 1000
+Time used: 168 ms
+Data received: 984.375 KiB
+Avg latency: 3.637 ms
+Throughput: 5952.380952380952 msg/sec
+Throughput: 5859.375 KiB/sec
+
+========================
+
+===== MQ BENCHMARK RESULT =====
+Tue Jan 23 2018 12:00:51 GMT+0700 (+07)
+
+MQ: libp2p
+Distribution: uniform
+Message count: 1000
+Message size: 1000
+
+***** SENDER *****
+Message sent: 1000
+Time used: 167 ms
+Data sent: 984.375 KiB
+Throughput: 5988.023952095808 msg/sec
+Throughput: 5894.461077844311 KiB/sec
+
+***** RECEIVER *****
+Message received: 1000
+Time used: 169 ms
+Data received: 984.375 KiB
+Avg latency: 0.745 ms
+Throughput: 5917.15976331361 msg/sec
+Throughput: 5824.704142011834 KiB/sec
+
+========================
+
+===== MQ BENCHMARK RESULT =====
+Tue Jan 23 2018 12:01:01 GMT+0700 (+07)
+
+MQ: libp2p
+Distribution: uniform
+Message count: 1000
+Message size: 1000
+
+***** SENDER *****
+Message sent: 1000
+Time used: 157 ms
+Data sent: 984.375 KiB
+Throughput: 6369.426751592357 msg/sec
+Throughput: 6269.904458598727 KiB/sec
+
+***** RECEIVER *****
+Message received: 1000
+Time used: 157 ms
+Data received: 984.375 KiB
+Avg latency: 0.577 ms
+Throughput: 6369.426751592357 msg/sec
+Throughput: 6269.904458598727 KiB/sec
+
+========================
+
+===== MQ BENCHMARK RESULT =====
+Tue Jan 23 2018 12:01:50 GMT+0700 (+07)
+
+MQ: libp2p
+Distribution: poisson
+Message count: 10000
+Duration: 5
+Average message size: 1024
+Average delay between sending messages: 1000
+
+***** SENDER *****
+Message sent: 4328
+Time used: 5000 ms
+Data sent: 4385.8125 KiB
+Throughput: 865.6 msg/sec
+Throughput: 877.1624999999999 KiB/sec
+
+***** RECEIVER *****
+Message received: 4328
+Time used: 4984 ms
+Data received: 4385.8125 KiB
+Avg latency: 1.4803604436229205 ms
+Throughput: 868.3788121990369 msg/sec
+Throughput: 879.9784309791332 KiB/sec
+
+========================
+

@@ -34,8 +34,12 @@ class ZeroMQReceiver {
     this.sockSub.close();
   }
 
-  signalFinish() {
-    this.sockPub.send([signalTopic, Buffer.from('finish')]);
+  // signalFinish() {
+  //   this.sockPub.send([signalTopic, Buffer.from('finish')]);
+  // }
+
+  sendResult(result) {
+    this.sockPub.send([signalTopic, result]);
   }
 
 }

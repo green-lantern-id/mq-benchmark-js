@@ -31,8 +31,12 @@ class LibP2PReceiver {
     await this.node.stopAsync();
   }
 
-  signalFinish() {
-    this.fs.publish('signal', Buffer.from('finish'));
+  // signalFinish() {
+  //   this.fs.publish('signal', Buffer.from('finish'));
+  // }
+
+  sendResult(result) {
+    this.fs.publish('signal', result);
   }
 
 }

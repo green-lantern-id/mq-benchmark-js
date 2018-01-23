@@ -21,10 +21,17 @@
 
     **Example:**
 
+    libp2p
+
     ```
     node src/benchmark.js uniform receiver --mq libp2p
     ```
 
+    ZeroMQ
+
+    ```
+    node src/benchmark.js uniform receiver --mq zeromq --brokerIp 127.0.0.1
+    ```
 
 3. Run a broker node
 
@@ -34,12 +41,20 @@
 
     **Example:**
 
+    libp2p
+
     ```
     node src/benchmark.js uniform broker --mq libp2p --receiverIp 127.0.0.1
     ```
 
     ```
     node src/benchmark.js poisson broker --mq libp2p --receiverIp 127.0.0.1
+    ```
+
+    ZeroMQ
+
+    ```
+    node src/benchmark.js uniform broker --mq zeromq --senderIp 127.0.0.1 --receiverIp 127.0.0.1
     ```
 
 4. Run a sender node
@@ -60,6 +75,8 @@
 
     **Example:**
 
+    libp2p
+
     ```
     node src/benchmark.js uniform sender --mq libp2p -s 1000 -c 10000 --brokerIp 127.0.0.1
     ```
@@ -70,6 +87,12 @@
 
     ```
     node src/benchmark.js uniform sender --mq libp2p -s 1000 -d 2 --delay 100 --brokerIp 127.0.0.1
+    ```
+
+    ZeroMQ
+
+    ```
+    node src/benchmark.js uniform sender --mq zeromq -s 1000 -c 10000 --delay 100 --brokerIp 127.0.0.1
     ```
 
     #### Poisson
@@ -91,7 +114,7 @@
     avgDelay is in microsecond, min 1, max 1000
 
     ```
-    node src/benchmark.js poisson sender --mq libp2p -c 10000 -d 10 --avgSize 1000 --avgDelay 1000 --brokerIp 127.0.0.1
+    node src/benchmark.js poisson sender --mq libp2p -c 10000 -d 10 --avgSize 1024 --avgDelay 1000 --brokerIp 127.0.0.1
     ```
 
 Benchmark result will be printed to the console on sender and receiver nodes.
@@ -219,7 +242,7 @@ Benchmark result will be printed to the console on sender and receiver nodes.
       -e MESSAGE_COUNT='10000' \
       -e DURATION='10' \
       -e AVG_DELAY='1000' \
-      -e AVG_SIZE='1000' \
+      -e AVG_SIZE='1024' \
       -e BROKER_IP='172.17.0.3' \
       green-lantern/mq-benchmark-js:0.1
     ```

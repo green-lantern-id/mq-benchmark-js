@@ -5,6 +5,7 @@ process.on('unhandledRejection', function(reason, p) {
   console.error(reason.stack);
 });
 
+const fs = require('fs');
 const crypto = require('crypto');
 
 const yargs = require('yargs');
@@ -187,6 +188,107 @@ const duration = argv.duration;
 const avgSize = argv.avgSize;
 const avgDelay = argv.avgDelay;
 
+const benchmarkDetails = {
+  mq,
+  distribution: mode,
+  messageCount,
+  messageSize,
+  duration,
+  delay,
+  avgSize,
+  avgDelay,
+};
+
+const printSenderResult = (result) => {
+  console.log('\n===== TEST RESULT (SENDER) =====');
+  console.log('Message sent:', result.messageCounter);
+  console.log('Time used:', result.timeUsed, 'ms');
+  console.log('Data sent:', result.dataSent, 'KiB');
+  console.log(
+    'Throughput:',
+    result.throughput,
+    'msg/sec'
+  );
+  console.log(
+    'Throughput:',
+    result.throughputKiB,
+    'KiB/sec'
+  );
+  console.log('================================\n');
+};
+
+const printReceiverResult = (result) => {
+  console.log('\n===== TEST RESULT (RECEIVER) =====');
+  console.log('Message received:', result.messageCounter);
+  console.log('Time used:', result.timeUsed, 'ms');
+  console.log('Data received:', result.dataReceived, 'KiB');
+  console.log(
+    'Avg latency:',
+    result.avgLatency,
+    'ms'
+  );
+  console.log(
+    'Throughput:',
+    result.throughput,
+    'msg/sec'
+  );
+  console.log('Throughput:', result.throughputKiB, 'KiB/sec');
+  console.log('================================\n');
+};
+
+const getBenchmarkResultString = ({ datetime, benchmarkDetails, senderResult, receiverResult }) => {
+  const datetimeStr = (new Date(datetime)).toString();
+  
+  let otherBenchmarkDetailsStr = '';
+  if (benchmarkDetails.messageCount) otherBenchmarkDetailsStr += `Message count: ${benchmarkDetails.messageCount}\n`;
+  if (benchmarkDetails.messageSize) otherBenchmarkDetailsStr += `Message size: ${benchmarkDetails.messageSize}\n`;
+  if (benchmarkDetails.duration) otherBenchmarkDetailsStr += `Duration: ${benchmarkDetails.duration}\n`;
+  if (benchmarkDetails.delay) otherBenchmarkDetailsStr += `Delay between sending messages: ${benchmarkDetails.delay}\n`;
+  if (benchmarkDetails.avgSize) otherBenchmarkDetailsStr += `Average message size: ${benchmarkDetails.avgSize}\n`;
+  if (benchmarkDetails.avgDelay) otherBenchmarkDetailsStr += `Average delay between sending messages: ${benchmarkDetails.avgDelay}\n`;
+
+  const benchmarkResultStr = `===== MQ BENCHMARK RESULT =====
+${datetimeStr}
+
+MQ: ${benchmarkDetails.mq}
+Distribution: ${benchmarkDetails.distribution}
+${otherBenchmarkDetailsStr}
+***** SENDER *****
+Message sent: ${senderResult.messageCounter}
+Time used: ${senderResult.timeUsed} ms
+Data sent: ${senderResult.dataSent} KiB
+Throughput: ${senderResult.throughput} msg/sec
+Throughput: ${senderResult.throughputKiB} KiB/sec
+
+***** RECEIVER *****
+Message received: ${receiverResult.messageCounter}
+Time used: ${receiverResult.timeUsed} ms
+Data received: ${receiverResult.dataReceived} KiB
+Avg latency: ${receiverResult.avgLatency} ms
+Throughput: ${receiverResult.throughput} msg/sec
+Throughput: ${receiverResult.throughputKiB} KiB/sec
+
+========================
+`;
+
+  return benchmarkResultStr;
+};
+
+const appendResultToFile = ({ filename, datetime, benchmarkDetails, senderResult, receiverResult }) => {
+  const stringToWrite = getBenchmarkResultString({
+    datetime,
+    benchmarkDetails,
+    senderResult,
+    receiverResult,
+  });
+
+  try {
+    fs.appendFileSync(filename, `${stringToWrite}\n`);
+  } catch (err) {
+    console.error('Error appending result to file');
+  }
+};
+
 let Sender;
 let Broker;
 let Receiver;
@@ -206,26 +308,34 @@ switch (mq) {
 }
 
 (async () => {
-  if (mode === 'uniform') {
-    switch (role) {
-      case 'sender': {
-        const sender = new Sender();
-        await sender.setup({
-          bindIp: '0.0.0.0',
-          bindPort: 10001,
-          brokerIp: argv.brokerIp,
-          brokerPort: 10002,
-        });
+  
+  switch (role) {
+    case 'sender': {
+      const sender = new Sender();
+      await sender.setup({
+        bindIp: '0.0.0.0',
+        bindPort: 10001,
+        brokerIp: argv.brokerIp,
+        brokerPort: 10002,
+      });
+
+      const receiverResultPromise = new Promise(r => sender.once('result', (result) => r(result)));
+
+      let messageCounter = 0;
+      let sumSize = 0;
+      const startTime = Date.now();
+
+      if (mode === 'uniform') { // Uniform
 
         const message = crypto.randomBytes(messageSize);
         const messageLength = 8 + message.length;
-        const startTime = Date.now();
-        let messageCounter = 0;
+        
         if (messageCount) {
           for (let i = 0; i < messageCount; i++) {
             const timestampBuf = longToUint8Array(Date.now());
             sender.send(Buffer.concat([timestampBuf, message], messageLength));
             messageCounter++;
+            sumSize += messageLength;
             if (delay !== 0) {
               await usleep(delay);
             }
@@ -236,6 +346,7 @@ switch (mq) {
             const timestampBuf = longToUint8Array(Date.now());
             sender.send(Buffer.concat([timestampBuf, message], messageLength));
             messageCounter++;
+            sumSize += messageLength;
             if (delay !== 0) {
               await usleep(delay);
             }
@@ -245,107 +356,7 @@ switch (mq) {
           process.exit(0);
         }
 
-        // End message (timestamp = 0)
-        const timestampBuf = longToUint8Array(0);
-        sender.send(Buffer.concat([timestampBuf], 8));
-
-        const timeUsed = Date.now() - startTime;
-
-        console.log('\n===== TEST RESULT (SENDER) =====');
-        console.log('Message Sent:', messageCounter);
-        console.log('Time used:', timeUsed, 'ms');
-        console.log(
-          'Throughput:',
-          (messageCount || messageCounter) / timeUsed * 1000,
-          'msg/sec'
-        );
-        console.log('================================\n');
-
-        break;
-      }
-      case 'broker': {
-        const broker = new Broker();
-        await broker.setup({
-          bindIpNetwork1: '0.0.0.0',
-          bindPortNetwork1: 10002,
-          bindIpNetwork2: '0.0.0.0',
-          bindPortNetwork2: 20001,
-          senderIp: argv.senderIp,
-          senderPort: 10001,
-          receiverIp: argv.receiverIp,
-          receiverPort: 20002,
-        });
-
-        break;
-      }
-      case 'receiver': {
-        let startTime = null;
-        let messageCounter = 0;
-        let latencies = [];
-
-        const receiver = new Receiver();
-        await receiver.setup({
-          bindIp: '0.0.0.0',
-          bindPort: 20002,
-          brokerIp: argv.brokerIp,
-          brokerPort: 20001,
-          messageHandler: msg => {
-            const timestamp = uint8ArrayToLong(msg.slice(0, 8)); // First 8 bytes is timestamp from sender
-            if (timestamp > 0) latencies.push(Date.now() - timestamp);
-            // console.log(msg.from, msg.data.toString())
-
-            if (messageCounter === 0) {
-              startTime = timestamp;
-              console.log(new Date(), '>>> START TESTING (First message received)');
-            }
-
-            if (timestamp === 0) {
-              console.log(new Date(), '>>> FINISH TESTING (Last message received)');
-              const sumLatencies = latencies.reduce((a, b) => a + b, 0);
-              const timeUsed = Date.now() - startTime;
-              
-              console.log('\n===== TEST RESULT (RECEIVER) =====');
-              console.log('Message Received:', messageCounter);
-              console.log('Time used:', timeUsed, 'ms');
-              console.log(
-                'Avg Latency:',
-                sumLatencies / latencies.length,
-                'ms'
-              );
-              console.log(
-                'Throughput:',
-                messageCounter / timeUsed * 1000,
-                'msg/sec'
-              );
-              console.log('================================\n');
-
-              startTime = null;
-              messageCounter = 0;
-              latencies = [];
-              receiver.signalFinish();
-              return;
-            }
-
-            messageCounter++;
-          },
-        });
-
-        break;
-      }
-      default:
-        console.log('Invalid role');
-    }
-//===========================================================================================
-  } else if (mode === 'poisson') {
-    switch (role) {
-      case 'sender': {
-        const sender = new Sender();
-        await sender.setup({
-          bindIp: '0.0.0.0',
-          bindPort: 10001,
-          brokerIp: argv.brokerIp,
-          brokerPort: 10002,
-        });
+      } else if (mode === 'poisson') { // Poisson distribution
 
         if (!avgSize && !avgDelay)
           console.log('\n===\nNo avgSize or avgDelay specified, will behave like uniform.\n===\n');
@@ -357,10 +368,7 @@ switch (mq) {
         let timestampBuf,
           messageLength,
           payloadLength,
-          startTime = new Date().getTime(),
-          counter = messageCount,
-          sent = 0,
-          sumSize = 0;
+          counter = messageCount;
 
         while (true) {
           payloadLength = avgSize ? randomSize.sample() * 1024 : messageSize;
@@ -380,8 +388,8 @@ switch (mq) {
               messageLength
             )
           );
-          sent++;
-          sumSize += payloadLength;
+          messageCounter++;
+          sumSize += messageLength;
           if (counter) {
             if (--counter === 0) break;
           }
@@ -389,100 +397,121 @@ switch (mq) {
             break;
           }
         }
-
-        //last message to tell receiver to stop
-        let timeUsed = Date.now() - startTime;
-        timestampBuf = longToUint8Array(0);
-        sender.send(Buffer.concat([timestampBuf],8));
-
-        console.log('\n===== TEST RESULT (SENDER) =====');
-        console.log('Message Sent:', sent);
-        console.log('Time used:', timeUsed, 'ms');
-        console.log('Data Sent:', sumSize/1024, 'KB');
-        console.log(
-          'Throughput:',
-          sent / timeUsed * 1000,
-          'msg/sec'
-        );
-        console.log(
-          'Throughput:',
-          (sumSize/1024) / timeUsed * 1000,
-          'KB/sec'
-        );
-        console.log('================================\n');
-        break;
       }
-      case 'broker': {
-        const broker = new Broker();
-        await broker.setup({
-          bindIpNetwork1: '0.0.0.0',
-          bindPortNetwork1: 10002,
-          bindIpNetwork2: '0.0.0.0',
-          bindPortNetwork2: 20001,
-          receiverIp: argv.receiverIp,
-          receiverPort: 20002,
-        });
 
-        break;
+      // End message (timestamp = 0)
+      const timestampBuf = longToUint8Array(0);
+      sender.send(Buffer.concat([timestampBuf], 8));
+
+      const timeUsed = Date.now() - startTime;
+
+      const senderResult = {
+        messageCounter,
+        timeUsed,
+        dataSent: sumSize / 1024,
+        throughput: messageCounter / timeUsed * 1000,
+        throughputKiB: (sumSize / 1024) / timeUsed * 1000,
+      };
+
+      const receiverResult = await receiverResultPromise;
+
+      console.log(getBenchmarkResultString({
+        datetime: startTime,
+        benchmarkDetails,
+        senderResult,
+        receiverResult,
+      }));
+
+      appendResultToFile({
+        filename: 'result.txt',
+        datetime: startTime,
+        benchmarkDetails,
+        senderResult,
+        receiverResult,
+      });
+
+      console.log(new Date(), '[SENDER]:', 'Finished benchmarking.');
+
+      // When using libp2p, somehow there is still a connection opened after closing
+      // Need to explicitly exit the process
+      if (mq === 'libp2p') {
+        process.exit(0);
       }
-      case 'receiver': {
-        let startTime = null;
-        let messageCounter = 0;
-        let latencies = [];
-        let sumSize = 0;
 
-        const receiver = new Receiver();
-        await receiver.setup({
-          bindIp: '0.0.0.0',
-          bindPort: 20002,
-          messageHandler: msg => {
-            const timestamp = uint8ArrayToLong(msg.slice(0, 8)); // First 8 bytes is timestamp from sender
-            if(timestamp > 0) {
-              sumSize += msg.length - 8;
-              latencies.push(Date.now() - timestamp);
-            }
-
-            if (messageCounter === 0) {
-              startTime = timestamp;
-              console.log(new Date(), '>>> START TESTING');
-            }
-
-            if (timestamp === 0) {
-              console.log(new Date(), '>>> FINISH TESTING');
-              const sumLatencies = latencies.reduce((a, b) => a + b, 0);
-              const timeUsed = Date.now() - startTime;
-              console.log('\n===== TEST RESULT (RECEIVER) =====');
-              console.log('Message Received:', messageCounter);
-              console.log('Time used:', timeUsed, 'ms');
-              console.log('Data received:', sumSize/1024, 'KB');
-              console.log(
-                'Avg Latency:',
-                sumLatencies / latencies.length,
-                'ms'
-              );
-              console.log(
-                'Throughput:',
-                messageCounter / timeUsed * 1000,
-                'msg/sec'
-              );
-              console.log('Throughput:', (sumSize/1024) / timeUsed * 1000, 'KB/sec');
-              console.log('================================\n');
-
-              startTime = null;
-              sumSize = 0;
-              messageCounter = 0;
-              latencies = [];
-              receiver.signalFinish();
-              return;
-            }
-            messageCounter++;
-          },
-        });
-
-        break;
-      }
-      default:
-        console.log('Invalid role');
+      break;
     }
+    case 'broker': {
+      const broker = new Broker();
+      await broker.setup({
+        bindIpNetwork1: '0.0.0.0',
+        bindPortNetwork1: 10002,
+        bindIpNetwork2: '0.0.0.0',
+        bindPortNetwork2: 20001,
+        senderIp: argv.senderIp,
+        senderPort: 10001,
+        receiverIp: argv.receiverIp,
+        receiverPort: 20002,
+      });
+
+      break;
+    }
+    case 'receiver': {
+      let startTime = null;
+      let messageCounter = 0;
+      let latencies = [];
+      let sumSize = 0;
+
+      const receiver = new Receiver();
+      await receiver.setup({
+        bindIp: '0.0.0.0',
+        bindPort: 20002,
+        brokerIp: argv.brokerIp,
+        brokerPort: 20001,
+        messageHandler: msg => {
+          const timestamp = uint8ArrayToLong(msg.slice(0, 8)); // First 8 bytes is timestamp from sender
+          if (timestamp > 0) {
+            sumSize += msg.length;
+            latencies.push(Date.now() - timestamp);
+          }
+          // console.log(msg.from, msg.data.toString())
+
+          if (messageCounter === 0) {
+            startTime = timestamp;
+            console.log(new Date(), '>>> START BENCHMARKING (First message received)');
+          }
+
+          if (timestamp === 0) {
+            console.log(new Date(), '>>> FINISH BENCHMARKING (Last message received)');
+            const sumLatencies = latencies.reduce((a, b) => a + b, 0);
+            const timeUsed = Date.now() - startTime;
+
+            const result = {
+              messageCounter,
+              timeUsed,
+              dataReceived: sumSize / 1024,
+              avgLatency: sumLatencies / latencies.length,
+              throughput: messageCounter / timeUsed * 1000,
+              throughputKiB: (sumSize / 1024) / timeUsed * 1000,
+            };
+            
+            printReceiverResult(result);
+
+            startTime = null;
+            sumSize = 0;
+            messageCounter = 0;
+            latencies = [];
+
+            receiver.sendResult(Buffer.from(JSON.stringify(result)));
+            return;
+          }
+
+          messageCounter++;
+        },
+      });
+
+      break;
+    }
+    default:
+      console.log('Invalid role');
   }
 })();

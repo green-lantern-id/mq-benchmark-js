@@ -1,5 +1,7 @@
 'use strict';
 
+const EventEmitter = require('events');
+
 const zmq = require('zeromq');
 
 const { sleep } = require('../../utils');
@@ -7,7 +9,7 @@ const { sleep } = require('../../utils');
 const testTopic = Buffer.from('test');
 const signalTopic = Buffer.from('signal');
 
-class ZeroMQSender {
+class ZeroMQSender extends EventEmitter {
   async setup({ bindIp, bindPort, brokerIp, brokerPort }) {
     this.sockPub = zmq.socket('pub');
     this.sockPub.bindSync(`tcp://${bindIp}:${bindPort}`);
@@ -19,15 +21,11 @@ class ZeroMQSender {
     this.sockSub.on('message', (topic, message) => {
       if (topic.equals(signalTopic)) {
         const dataStr = message.toString();
-        if (dataStr === 'finish') {
-          this.teardown();
+        const dataJSON = JSON.parse(dataStr);
+        
+        this.teardown();
 
-          console.log(new Date(), '[SENDER]:', 'Finish benchmarking.');
-
-          // Somehow there is still a opened connection after calling teardown
-          // Need to explicitly exit the process
-          // process.exit(0);
-        }
+        this.emit('result', dataJSON);
       }
     });
 

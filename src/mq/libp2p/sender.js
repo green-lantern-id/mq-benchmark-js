@@ -1,5 +1,7 @@
 'use strict';
 
+const EventEmitter = require('events');
+
 const bluebird = require('bluebird');
 
 const PeerId = require('peer-id');
@@ -13,7 +15,7 @@ const { createNode } = require('./helpers');
 
 const { sleep } = require('../../utils');
 
-class LibP2PSender {
+class LibP2PSender extends EventEmitter {
   async setup({ bindIp, bindPort, brokerIp, brokerPort }) {
     this.node = await createNode(bindIp, bindPort, PEER_ID);
 
@@ -42,15 +44,15 @@ class LibP2PSender {
 
         this.fs.on('signal', async (msg) => {
           const dataStr = msg.data.toString();
-          if (dataStr === 'finish') {
-            await this.teardown();
+          const dataJSON = JSON.parse(dataStr);
 
-            console.log(new Date(), '[SENDER]:', 'Finish benchmarking.');
+          await this.teardown();
 
-            // Somehow there is still a opened connection after calling teardown
-            // Need to explicitly exit the process
-            process.exit(0);
-          }
+          this.emit('result', dataJSON);
+
+          // Somehow there is still a opened connection after calling teardown
+          // Need to explicitly exit the process
+          // process.exit(0);
         });
         this.fs.subscribe('signal');
 
