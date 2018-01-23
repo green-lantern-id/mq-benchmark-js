@@ -242,11 +242,11 @@ const getBenchmarkResultString = ({ datetime, benchmarkDetails, senderResult, re
   
   let otherBenchmarkDetailsStr = '';
   if (benchmarkDetails.messageCount) otherBenchmarkDetailsStr += `Message count: ${benchmarkDetails.messageCount}\n`;
-  if (benchmarkDetails.messageSize) otherBenchmarkDetailsStr += `Message size: ${benchmarkDetails.messageSize}\n`;
-  if (benchmarkDetails.duration) otherBenchmarkDetailsStr += `Duration: ${benchmarkDetails.duration}\n`;
-  if (benchmarkDetails.delay) otherBenchmarkDetailsStr += `Delay between sending messages: ${benchmarkDetails.delay}\n`;
-  if (benchmarkDetails.avgSize) otherBenchmarkDetailsStr += `Average message size: ${benchmarkDetails.avgSize}\n`;
-  if (benchmarkDetails.avgDelay) otherBenchmarkDetailsStr += `Average delay between sending messages: ${benchmarkDetails.avgDelay}\n`;
+  if (benchmarkDetails.messageSize) otherBenchmarkDetailsStr += `Message size: ${benchmarkDetails.messageSize} bytes\n`;
+  if (benchmarkDetails.duration) otherBenchmarkDetailsStr += `Duration: ${benchmarkDetails.duration} seconds\n`;
+  if (benchmarkDetails.delay) otherBenchmarkDetailsStr += `Delay between sending messages: ${benchmarkDetails.delay} microseconds\n`;
+  if (benchmarkDetails.avgSize) otherBenchmarkDetailsStr += `Average message size: ${benchmarkDetails.avgSize} bytes\n`;
+  if (benchmarkDetails.avgDelay) otherBenchmarkDetailsStr += `Average delay between sending messages: ${benchmarkDetails.avgDelay} microseconds\n`;
 
   const benchmarkResultStr = `===== MQ BENCHMARK RESULT =====
 ${datetimeStr}
