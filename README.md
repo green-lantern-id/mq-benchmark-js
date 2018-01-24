@@ -59,6 +59,9 @@
 
 4. Run a sender node
 
+    Parameters:
+      `resultFilepath`: Default is `./mq_result.txt`
+
     #### Uniform
 
     ```
@@ -68,7 +71,8 @@
          -c <MESSAGE_COUNT> \
          -d <DURATION_IN_SECONDS> \
          --delay <DELAY_IN_MICROSECONDS> \
-         --brokerIp <BROKER_IP>
+         --brokerIp <BROKER_IP> \
+         --resultFilepath <RESULT_FILEPATH>
     ```
 
     `delay`: Delay between message transmissions in microseconds
@@ -104,7 +108,8 @@
          -d <DURATION_IN_SECONDS> \
          --avgSize <AVERAGE_MESSAGE_SIZE_IN_BYTES> \
          --avgDelay <AVERAGE_DELAY_IN_MICROSECONDS> \
-         --brokerIp <BROKER_IP>
+         --brokerIp <BROKER_IP> \
+         --resultFilepath <RESULT_FILEPATH>
     ```
 
     **Example:**
@@ -187,28 +192,33 @@ Benchmark result will be printed to the console on sender node and written to `r
 
     ```
     docker run -it --rm \
+      -v ./logs:/var/log \
       -e TEST_MODE='uniform' \
       -e ROLE='sender' \
       -e MESSAGE_QUEUE='libp2p' \
       -e MESSAGE_COUNT='1000' \
       -e MESSAGE_SIZE='1000' \
       -e BROKER_IP='172.17.0.3' \
+      -e RESULT_FILEPATH='/var/log/mq_result.txt' \
       green-lantern/mq-benchmark-js:0.1
     ```
 
      ```
     docker run -it --rm \
+      -v ./logs:/var/log \
       -e TEST_MODE='uniform' \
       -e ROLE='sender' \
       -e MESSAGE_QUEUE='libp2p' \
       -e DURATION='3' \
       -e MESSAGE_SIZE='1000' \
       -e BROKER_IP='172.17.0.3' \
+      -e RESULT_FILEPATH='/var/log/mq_result.txt' \
       green-lantern/mq-benchmark-js:0.1
     ```
 
     ```
     docker run -it --rm \
+      -v ./logs:/var/log \
       -e TEST_MODE='uniform' \
       -e ROLE='sender' \
       -e MESSAGE_QUEUE='libp2p' \
@@ -216,6 +226,7 @@ Benchmark result will be printed to the console on sender node and written to `r
       -e DELAY='100' \
       -e MESSAGE_SIZE='1000' \
       -e BROKER_IP='172.17.0.3' \
+      -e RESULT_FILEPATH='/var/log/mq_result.txt' \
       green-lantern/mq-benchmark-js:0.1
     ```
 
@@ -223,12 +234,14 @@ Benchmark result will be printed to the console on sender node and written to `r
 
     ```
     docker run -it --rm \
+      -v ./logs:/var/log \
       -e TEST_MODE='uniform' \
       -e ROLE='sender' \
       -e MESSAGE_QUEUE='zeromq' \
       -e MESSAGE_COUNT='1000' \
       -e MESSAGE_SIZE='1000' \
       -e BROKER_IP='172.17.0.3' \
+      -e RESULT_FILEPATH='/var/log/mq_result.txt' \
       green-lantern/mq-benchmark-js:0.1
     ```
 
@@ -236,6 +249,7 @@ Benchmark result will be printed to the console on sender node and written to `r
 
     ```
     docker run -it --rm \
+      -v ./logs:/var/log \
       -e TEST_MODE='poisson' \
       -e ROLE='sender' \
       -e MESSAGE_QUEUE='libp2p' \
@@ -244,5 +258,6 @@ Benchmark result will be printed to the console on sender node and written to `r
       -e AVG_DELAY='1000' \
       -e AVG_SIZE='1024' \
       -e BROKER_IP='172.17.0.3' \
+      -e RESULT_FILEPATH='/var/log/mq_result.txt' \
       green-lantern/mq-benchmark-js:0.1
     ```

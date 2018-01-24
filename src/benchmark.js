@@ -176,6 +176,10 @@ const argv = yargs
     choices: ['libp2p', 'zeromq'],
     demandOption: true,
   })
+  .option('resultFilepath', {
+    describe: 'filepath to write results to (default: same directory as benchmark.js "./mq_result.txt")',
+    default: './mq_result.txt',
+  })
   .demandCommand(1, 'You need to specifiy a mode to test')
   .help().argv;
 
@@ -188,6 +192,7 @@ const delay = argv.delay;
 const duration = argv.duration;
 const avgSize = argv.avgSize;
 const avgDelay = argv.avgDelay;
+const resultFilepath = argv.resultFilepath;
 
 const benchmarkDetails = {
   mq,
@@ -237,7 +242,7 @@ const printReceiverResult = (result) => {
   console.log('================================\n');
 };
 
-const getBenchmarkResultString = ({ datetime, benchmarkDetails, senderResult, receiverResult }) => {
+const getBenchmarkResultString = ({ datetime, benchmarkDetails, senderResult, receiverResult, withLatencies }) => {
   const datetimeStr = (new Date(datetime)).toString();
   
   let otherBenchmarkDetailsStr = '';
@@ -247,6 +252,11 @@ const getBenchmarkResultString = ({ datetime, benchmarkDetails, senderResult, re
   if (benchmarkDetails.delay) otherBenchmarkDetailsStr += `Delay between sending messages: ${benchmarkDetails.delay} microseconds\n`;
   if (benchmarkDetails.avgSize) otherBenchmarkDetailsStr += `Average message size: ${benchmarkDetails.avgSize} bytes\n`;
   if (benchmarkDetails.avgDelay) otherBenchmarkDetailsStr += `Average delay between sending messages: ${benchmarkDetails.avgDelay} microseconds\n`;
+
+  let latenciesStr = '';
+  if (withLatencies) {
+    latenciesStr = `\nLatencies (ms):\n${receiverResult.latencies}\n`;
+  }
 
   const benchmarkResultStr = `===== MQ BENCHMARK RESULT =====
 ${datetimeStr}
@@ -268,25 +278,26 @@ Data received: ${receiverResult.dataReceived} KiB
 Avg latency: ${receiverResult.avgLatency} ms
 Throughput: ${receiverResult.throughput} msg/sec
 Throughput: ${receiverResult.throughputKiB} KiB/sec
-
+${latenciesStr}
 ========================
 `;
 
   return benchmarkResultStr;
 };
 
-const appendResultToFile = ({ filename, datetime, benchmarkDetails, senderResult, receiverResult }) => {
+const appendResultToFile = ({ filepath, datetime, benchmarkDetails, senderResult, receiverResult }) => {
   const stringToWrite = getBenchmarkResultString({
     datetime,
     benchmarkDetails,
     senderResult,
     receiverResult,
+    withLatencies: true,
   });
 
   try {
-    fs.appendFileSync(path.resolve(__dirname, filename), `${stringToWrite}\n`);
+    fs.appendFileSync(path.resolve(__dirname, filepath), `${stringToWrite}\n`);
   } catch (err) {
-    console.error('Error appending result to file');
+    console.error('Error appending result to file', err);
   }
 };
 
@@ -424,7 +435,7 @@ switch (mq) {
       }));
 
       appendResultToFile({
-        filename: 'result.txt',
+        filepath: resultFilepath,
         datetime: startTime,
         benchmarkDetails,
         senderResult,
@@ -493,6 +504,7 @@ switch (mq) {
               avgLatency: sumLatencies / latencies.length,
               throughput: messageCounter / timeUsed * 1000,
               throughputKiB: (sumSize / 1024) / timeUsed * 1000,
+              latencies,
             };
             
             printReceiverResult(result);
