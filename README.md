@@ -192,7 +192,7 @@ Benchmark result will be printed to the console on sender node and written to `r
 
     ```
     docker run -it --rm \
-      -v ./logs:/var/log \
+      -v "$PWD"/logs:/var/log \
       -e TEST_MODE='uniform' \
       -e ROLE='sender' \
       -e MESSAGE_QUEUE='libp2p' \
@@ -205,7 +205,7 @@ Benchmark result will be printed to the console on sender node and written to `r
 
      ```
     docker run -it --rm \
-      -v ./logs:/var/log \
+      -v "$PWD"/logs:/var/log \
       -e TEST_MODE='uniform' \
       -e ROLE='sender' \
       -e MESSAGE_QUEUE='libp2p' \
@@ -218,7 +218,7 @@ Benchmark result will be printed to the console on sender node and written to `r
 
     ```
     docker run -it --rm \
-      -v ./logs:/var/log \
+      -v "$PWD"/logs:/var/log \
       -e TEST_MODE='uniform' \
       -e ROLE='sender' \
       -e MESSAGE_QUEUE='libp2p' \
@@ -234,7 +234,7 @@ Benchmark result will be printed to the console on sender node and written to `r
 
     ```
     docker run -it --rm \
-      -v ./logs:/var/log \
+      -v "$PWD"/logs:/var/log \
       -e TEST_MODE='uniform' \
       -e ROLE='sender' \
       -e MESSAGE_QUEUE='zeromq' \
@@ -249,7 +249,7 @@ Benchmark result will be printed to the console on sender node and written to `r
 
     ```
     docker run -it --rm \
-      -v ./logs:/var/log \
+      -v "$PWD"/logs:/var/log \
       -e TEST_MODE='poisson' \
       -e ROLE='sender' \
       -e MESSAGE_QUEUE='libp2p' \
