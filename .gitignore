@@ -1,4 +1,7 @@
 result.txt
+mq_result.txt
+
+logs/
 
 build/
 dist/
