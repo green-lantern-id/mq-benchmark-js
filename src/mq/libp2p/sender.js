@@ -79,12 +79,22 @@ class LibP2PSender extends EventEmitter {
   }
 
   async teardown() {
+    this.stopSendWithRetry();
     await this.fs.stopAsync();
     await this.node.stopAsync();
   }
 
   send(message) {
     this.fs.publish('test', message);
+  }
+
+  sendWithRetry(message) {
+    this.sendWithRetryIntervalFn = setInterval(() => this.fs.publish('test', message), 1);
+  }
+
+  stopSendWithRetry() {
+    clearInterval(this.sendWithRetryIntervalFn);
+    this.sendWithRetryIntervalFn = null;
   }
 
 }

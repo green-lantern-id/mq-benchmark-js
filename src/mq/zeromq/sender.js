@@ -35,12 +35,22 @@ class ZeroMQSender extends EventEmitter {
   }
 
   async teardown() {
+    this.stopSendWithRetry();
     this.sockPub.close();
     this.sockSub.close();
   }
 
   send(message) {
     this.sockPub.send([testTopic, message]);
+  }
+
+  sendWithRetry(message) {
+    this.sendWithRetryIntervalFn = setInterval(() => this.sockPub.send([testTopic, message]), 1);
+  }
+
+  stopSendWithRetry() {
+    clearInterval(this.sendWithRetryIntervalFn);
+    this.sendWithRetryIntervalFn = null;
   }
 
 }

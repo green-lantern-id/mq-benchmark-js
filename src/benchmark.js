@@ -258,6 +258,9 @@ const getBenchmarkResultString = ({ datetime, benchmarkDetails, senderResult, re
     latenciesStr = `\nLatencies (ms):\n${receiverResult.latencies}\n`;
   }
 
+  const messageLossCount = senderResult.messageCounter - receiverResult.messageCounter;
+  const messageLossPercent = messageLossCount / senderResult.messageCounter * 100;
+
   const benchmarkResultStr = `===== MQ BENCHMARK RESULT =====
 ${datetimeStr}
 
@@ -273,6 +276,7 @@ Throughput: ${senderResult.throughputKiB} KiB/sec
 
 ***** RECEIVER *****
 Message received: ${receiverResult.messageCounter}
+Message loss: ${messageLossCount} (${messageLossPercent}%)
 Time used: ${receiverResult.timeUsed} ms
 Data received: ${receiverResult.dataReceived} KiB
 Avg latency: ${receiverResult.avgLatency} ms
@@ -413,7 +417,7 @@ switch (mq) {
 
       // End message (timestamp = 0)
       const timestampBuf = longToUint8Array(0);
-      sender.send(Buffer.concat([timestampBuf], 8));
+      sender.sendWithRetry(Buffer.concat([timestampBuf], 8));
 
       const timeUsed = Date.now() - startTime;
 
@@ -481,6 +485,9 @@ switch (mq) {
         brokerPort: 20001,
         messageHandler: msg => {
           const timestamp = uint8ArrayToLong(msg.slice(0, 8)); // First 8 bytes is timestamp from sender
+          
+          if (timestamp === 0 && startTime === null) return;
+
           if (timestamp > 0) {
             sumSize += msg.length;
             latencies.push(Date.now() - timestamp);
