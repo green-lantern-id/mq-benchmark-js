@@ -30,5 +30,5 @@ CMD node /mq-benchmark-js/src/benchmark.js $TEST_MODE $ROLE \
     --senderIp $SENDER_IP \
     --brokerIp $BROKER_IP \
     --receiverIp $RECEIVER_IP \
-    -n $NAME \
+    -n "$NAME" \
     --resultFilepath $RESULT_FILEPATH
