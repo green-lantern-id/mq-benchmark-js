@@ -81,13 +81,7 @@ const argv = yargs
         });
       })
       .command('receiver', 'receiver role', yargs => {
-        yargs.option('messageCount', {
-          alias: 'c',
-          describe: 'expected number of messages to receive',
-          type: 'number',
-          // demandOption: true,
-        })
-        .option('brokerIp', {
+        yargs.option('brokerIp', {
           describe: 'broker node IP address',
           type: 'string',
           // demandOption: true,
@@ -263,12 +257,12 @@ ${latenciesStr}
 
 const getBenchmarkDetailsString = ({ benchmarkDetails }) => {
   let otherBenchmarkDetailsStr = '';
-  if (benchmarkDetails.messageCount) otherBenchmarkDetailsStr += `Message count: ${benchmarkDetails.messageCount}\n`;
-  if (benchmarkDetails.messageSize) otherBenchmarkDetailsStr += `Message size: ${benchmarkDetails.messageSize} bytes\n`;
-  if (benchmarkDetails.duration) otherBenchmarkDetailsStr += `Duration: ${benchmarkDetails.duration} seconds\n`;
-  if (benchmarkDetails.delay) otherBenchmarkDetailsStr += `Delay between sending messages: ${benchmarkDetails.delay} microseconds\n`;
-  if (benchmarkDetails.avgSize) otherBenchmarkDetailsStr += `Average message size: ${benchmarkDetails.avgSize} bytes\n`;
-  if (benchmarkDetails.avgDelay) otherBenchmarkDetailsStr += `Average delay between sending messages: ${benchmarkDetails.avgDelay} microseconds\n`;
+  if (typeof benchmarkDetails.messageCount === 'number') otherBenchmarkDetailsStr += `Message count: ${benchmarkDetails.messageCount}\n`;
+  if (typeof benchmarkDetails.messageSize === 'number') otherBenchmarkDetailsStr += `Message size: ${benchmarkDetails.messageSize} bytes\n`;
+  if (typeof benchmarkDetails.duration === 'number') otherBenchmarkDetailsStr += `Duration: ${benchmarkDetails.duration} seconds\n`;
+  if (typeof benchmarkDetails.delay === 'number') otherBenchmarkDetailsStr += `Delay between sending messages: ${benchmarkDetails.delay} microseconds\n`;
+  if (typeof benchmarkDetails.avgSize === 'number') otherBenchmarkDetailsStr += `Average message size: ${benchmarkDetails.avgSize} bytes\n`;
+  if (typeof benchmarkDetails.avgDelay === 'number') otherBenchmarkDetailsStr += `Average delay between sending messages: ${benchmarkDetails.avgDelay} microseconds\n`;
 
   return `MQ: ${benchmarkDetails.mq}
 Distribution: ${benchmarkDetails.distribution}
