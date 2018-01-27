@@ -16,7 +16,7 @@
 2. Run a receiver node
 
     ```
-    node src/benchmark.js <TEST_MODE> receiver --mq <MESSAGE_QUEUE_LIB>
+    node src/benchmark.js <TEST_MODE> receiver --mq <MESSAGE_QUEUE_LIB> -n <NAME> --resultFilepath <RESULT_FILEPATH>
     ```
 
     **Example:**
@@ -72,6 +72,7 @@
          -d <DURATION_IN_SECONDS> \
          --delay <DELAY_IN_MICROSECONDS> \
          --brokerIp <BROKER_IP> \
+         -n <NAME> \
          --resultFilepath <RESULT_FILEPATH>
     ```
 
@@ -109,6 +110,7 @@
          --avgSize <AVERAGE_MESSAGE_SIZE_IN_BYTES> \
          --avgDelay <AVERAGE_DELAY_IN_MICROSECONDS> \
          --brokerIp <BROKER_IP> \
+         -n <NAME> \
          --resultFilepath <RESULT_FILEPATH>
     ```
 
@@ -140,9 +142,12 @@ Benchmark result will be printed to the console on sender node and written to `r
 
     ```
     docker run -it --rm \
+      -v "$PWD"/logs:/var/log \
       -e TEST_MODE='uniform' \
       -e ROLE='receiver' \
       -e MESSAGE_QUEUE='libp2p' \
+      -e NAME='Benchmark 1' \
+      -e RESULT_FILEPATH='/var/log/mq_receiver_result.txt' \
       green-lantern/mq-benchmark-js:0.1
     ```
 
@@ -150,10 +155,13 @@ Benchmark result will be printed to the console on sender node and written to `r
 
     ```
     docker run -it --rm \
+      -v "$PWD"/logs:/var/log \
       -e TEST_MODE='uniform' \
       -e ROLE='receiver' \
       -e MESSAGE_QUEUE='zeromq' \
       -e BROKER_IP='172.17.0.3' \
+      -e NAME='Benchmark 1' \
+      -e RESULT_FILEPATH='/var/log/mq_receiver_result.txt' \
       green-lantern/mq-benchmark-js:0.1
     ```
 
@@ -199,6 +207,7 @@ Benchmark result will be printed to the console on sender node and written to `r
       -e MESSAGE_COUNT='1000' \
       -e MESSAGE_SIZE='1000' \
       -e BROKER_IP='172.17.0.3' \
+      -e NAME='Benchmark 1' \
       -e RESULT_FILEPATH='/var/log/mq_result.txt' \
       green-lantern/mq-benchmark-js:0.1
     ```
@@ -212,6 +221,7 @@ Benchmark result will be printed to the console on sender node and written to `r
       -e DURATION='3' \
       -e MESSAGE_SIZE='1000' \
       -e BROKER_IP='172.17.0.3' \
+      -e NAME='Benchmark 2' \
       -e RESULT_FILEPATH='/var/log/mq_result.txt' \
       green-lantern/mq-benchmark-js:0.1
     ```
@@ -226,6 +236,7 @@ Benchmark result will be printed to the console on sender node and written to `r
       -e DELAY='100' \
       -e MESSAGE_SIZE='1000' \
       -e BROKER_IP='172.17.0.3' \
+      -e NAME='Benchmark 3' \
       -e RESULT_FILEPATH='/var/log/mq_result.txt' \
       green-lantern/mq-benchmark-js:0.1
     ```
@@ -241,6 +252,7 @@ Benchmark result will be printed to the console on sender node and written to `r
       -e MESSAGE_COUNT='1000' \
       -e MESSAGE_SIZE='1000' \
       -e BROKER_IP='172.17.0.3' \
+      -e NAME='Benchmark 1' \
       -e RESULT_FILEPATH='/var/log/mq_result.txt' \
       green-lantern/mq-benchmark-js:0.1
     ```
@@ -258,6 +270,7 @@ Benchmark result will be printed to the console on sender node and written to `r
       -e AVG_DELAY='1000' \
       -e AVG_SIZE='1024' \
       -e BROKER_IP='172.17.0.3' \
+      -e NAME='Benchmark 4' \
       -e RESULT_FILEPATH='/var/log/mq_result.txt' \
       green-lantern/mq-benchmark-js:0.1
     ```

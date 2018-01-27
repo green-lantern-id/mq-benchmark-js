@@ -178,7 +178,11 @@ const argv = yargs
   })
   .option('resultFilepath', {
     describe: 'filepath to write results to (default: same directory as benchmark.js "./mq_result.txt")',
-    default: './mq_result.txt',
+    // default: './mq_result.txt',
+  })
+  .option('name', {
+    alias: 'n',
+    describe: 'benchmark name',
   })
   .demandCommand(1, 'You need to specifiy a mode to test')
   .help().argv;
@@ -192,9 +196,13 @@ const delay = argv.delay;
 const duration = argv.duration;
 const avgSize = argv.avgSize;
 const avgDelay = argv.avgDelay;
-const resultFilepath = argv.resultFilepath;
+const resultFilepath = argv.resultFilepath
+  ? argv.resultFilepath
+  : role === 'sender' ? './mq_result.txt' : './mq_receiver_result.txt';
+const name = argv.name;
 
 const benchmarkDetails = {
+  name,
   mq,
   distribution: mode,
   messageCount,
@@ -207,6 +215,7 @@ const benchmarkDetails = {
 
 const printSenderResult = (result, benchmarkDetails) => {
   console.log(`===== MQ BENCHMARK RESULT =====
+Name: ${benchmarkDetails.name || ''}
 
 ${getBenchmarkDetailsString({ benchmarkDetails })}
 ***** SENDER *****
@@ -221,12 +230,23 @@ Throughput: ${result.throughputKiB} KiB/sec
 };
 
 const printReceiverResult = (result, withLatencies) => {
+  console.log(
+    getReceiverResultString({
+      result,
+      withLatencies,
+      benchmarkDetails,
+    })
+  );
+};
+
+const getReceiverResultString = ({ result, withLatencies, benchmarkDetails }) => {
   let latenciesStr = '';
   if (withLatencies) {
     latenciesStr = `\nLatencies (ms):\n${result.latencies}\n`;
   }
 
-  console.log(`===== MQ BENCHMARK RESULT =====
+  return `===== MQ BENCHMARK RESULT =====
+Name: ${benchmarkDetails.name || ''}
 
 ${getBenchmarkDetailsString({ benchmarkDetails })}
 ***** RECEIVER *****
@@ -238,7 +258,7 @@ Throughput: ${result.throughput} msg/sec
 Throughput: ${result.throughputKiB} KiB/sec
 ${latenciesStr}
 ========================
-`);
+`;
 };
 
 const getBenchmarkDetailsString = ({ benchmarkDetails }) => {
@@ -267,6 +287,7 @@ const getBenchmarkResultString = ({ datetime, benchmarkDetails, senderResult, re
   const messageLossPercent = messageLossCount / senderResult.messageCounter * 100;
 
   const benchmarkResultStr = `===== MQ BENCHMARK RESULT =====
+Name: ${benchmarkDetails.name || ''}
 ${datetimeStr}
 
 ${getBenchmarkDetailsString({ benchmarkDetails })}
@@ -305,6 +326,21 @@ const appendResultToFile = ({ filepath, datetime, benchmarkDetails, senderResult
     fs.appendFileSync(path.resolve(__dirname, filepath), `${stringToWrite}\n`);
   } catch (err) {
     console.error('Error appending result to file', err);
+  }
+};
+
+const appendReceiverResultToFile = ({ filepath, datetime, benchmarkDetails, result }) => {
+  const stringToWrite = getReceiverResultString({
+    datetime,
+    benchmarkDetails,
+    result,
+    withLatencies: true,
+  });
+
+  try {
+    fs.appendFileSync(path.resolve(__dirname, filepath), `${stringToWrite}\n`);
+  } catch (err) {
+    console.error('Error appending receiver result to file', err);
   }
 };
 
@@ -519,7 +555,14 @@ switch (mq) {
               latencies,
             };
             
-            printReceiverResult(result, true);
+            printReceiverResult(result, false);
+
+            appendReceiverResultToFile({
+              filepath: resultFilepath,
+              datetime: startTime,
+              benchmarkDetails,
+              result,
+            });
 
             startTime = null;
             sumSize = 0;
