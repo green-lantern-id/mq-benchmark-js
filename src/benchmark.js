@@ -205,46 +205,43 @@ const benchmarkDetails = {
   avgDelay,
 };
 
-const printSenderResult = (result) => {
-  console.log('\n===== TEST RESULT (SENDER) =====');
-  console.log('Message sent:', result.messageCounter);
-  console.log('Time used:', result.timeUsed, 'ms');
-  console.log('Data sent:', result.dataSent, 'KiB');
-  console.log(
-    'Throughput:',
-    result.throughput,
-    'msg/sec'
-  );
-  console.log(
-    'Throughput:',
-    result.throughputKiB,
-    'KiB/sec'
-  );
-  console.log('================================\n');
+const printSenderResult = (result, benchmarkDetails) => {
+  console.log(`===== MQ BENCHMARK RESULT =====
+
+${getBenchmarkDetailsString({ benchmarkDetails })}
+***** SENDER *****
+Message sent: ${result.messageCounter}
+Time used: ${result.timeUsed} ms
+Data sent: ${result.dataSent} KiB
+Throughput: ${result.throughput} msg/sec
+Throughput: ${result.throughputKiB} KiB/sec
+
+========================
+`);
 };
 
-const printReceiverResult = (result) => {
-  console.log('\n===== TEST RESULT (RECEIVER) =====');
-  console.log('Message received:', result.messageCounter);
-  console.log('Time used:', result.timeUsed, 'ms');
-  console.log('Data received:', result.dataReceived, 'KiB');
-  console.log(
-    'Avg latency:',
-    result.avgLatency,
-    'ms'
-  );
-  console.log(
-    'Throughput:',
-    result.throughput,
-    'msg/sec'
-  );
-  console.log('Throughput:', result.throughputKiB, 'KiB/sec');
-  console.log('================================\n');
+const printReceiverResult = (result, withLatencies) => {
+  let latenciesStr = '';
+  if (withLatencies) {
+    latenciesStr = `\nLatencies (ms):\n${result.latencies}\n`;
+  }
+
+  console.log(`===== MQ BENCHMARK RESULT =====
+
+${getBenchmarkDetailsString({ benchmarkDetails })}
+***** RECEIVER *****
+Message received: ${result.messageCounter}
+Time used: ${result.timeUsed} ms
+Data received: ${result.dataReceived} KiB
+Avg latency: ${result.avgLatency} ms
+Throughput: ${result.throughput} msg/sec
+Throughput: ${result.throughputKiB} KiB/sec
+${latenciesStr}
+========================
+`);
 };
 
-const getBenchmarkResultString = ({ datetime, benchmarkDetails, senderResult, receiverResult, withLatencies }) => {
-  const datetimeStr = (new Date(datetime)).toString();
-  
+const getBenchmarkDetailsString = ({ benchmarkDetails }) => {
   let otherBenchmarkDetailsStr = '';
   if (benchmarkDetails.messageCount) otherBenchmarkDetailsStr += `Message count: ${benchmarkDetails.messageCount}\n`;
   if (benchmarkDetails.messageSize) otherBenchmarkDetailsStr += `Message size: ${benchmarkDetails.messageSize} bytes\n`;
@@ -253,6 +250,14 @@ const getBenchmarkResultString = ({ datetime, benchmarkDetails, senderResult, re
   if (benchmarkDetails.avgSize) otherBenchmarkDetailsStr += `Average message size: ${benchmarkDetails.avgSize} bytes\n`;
   if (benchmarkDetails.avgDelay) otherBenchmarkDetailsStr += `Average delay between sending messages: ${benchmarkDetails.avgDelay} microseconds\n`;
 
+  return `MQ: ${benchmarkDetails.mq}
+Distribution: ${benchmarkDetails.distribution}
+${otherBenchmarkDetailsStr}`;
+};
+
+const getBenchmarkResultString = ({ datetime, benchmarkDetails, senderResult, receiverResult, withLatencies }) => {
+  const datetimeStr = (new Date(datetime)).toString();
+  
   let latenciesStr = '';
   if (withLatencies) {
     latenciesStr = `\nLatencies (ms):\n${receiverResult.latencies}\n`;
@@ -264,9 +269,7 @@ const getBenchmarkResultString = ({ datetime, benchmarkDetails, senderResult, re
   const benchmarkResultStr = `===== MQ BENCHMARK RESULT =====
 ${datetimeStr}
 
-MQ: ${benchmarkDetails.mq}
-Distribution: ${benchmarkDetails.distribution}
-${otherBenchmarkDetailsStr}
+${getBenchmarkDetailsString({ benchmarkDetails })}
 ***** SENDER *****
 Message sent: ${senderResult.messageCounter}
 Time used: ${senderResult.timeUsed} ms
@@ -429,6 +432,8 @@ switch (mq) {
         throughputKiB: (sumSize / 1024) / timeUsed * 1000,
       };
 
+      printSenderResult(senderResult, benchmarkDetails);
+
       const receiverResult = await receiverResultPromise;
 
       console.log(getBenchmarkResultString({
@@ -514,7 +519,7 @@ switch (mq) {
               latencies,
             };
             
-            printReceiverResult(result);
+            printReceiverResult(result, true);
 
             startTime = null;
             sumSize = 0;
