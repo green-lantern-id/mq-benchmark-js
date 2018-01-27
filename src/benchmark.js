@@ -177,6 +177,8 @@ const argv = yargs
   .option('name', {
     alias: 'n',
     describe: 'benchmark name',
+    type: 'string',
+    default: '',
   })
   .demandCommand(1, 'You need to specifiy a mode to test')
   .help().argv;
@@ -209,7 +211,7 @@ const benchmarkDetails = {
 
 const printSenderResult = (result, benchmarkDetails) => {
   console.log(`===== MQ BENCHMARK RESULT =====
-Name: ${benchmarkDetails.name || ''}
+Name: ${benchmarkDetails.name}
 
 ${getBenchmarkDetailsString({ benchmarkDetails })}
 ***** SENDER *****
@@ -240,7 +242,7 @@ const getReceiverResultString = ({ result, withLatencies, benchmarkDetails }) =>
   }
 
   return `===== MQ BENCHMARK RESULT =====
-Name: ${benchmarkDetails.name || ''}
+Name: ${benchmarkDetails.name}
 
 ${getBenchmarkDetailsString({ benchmarkDetails })}
 ***** RECEIVER *****
@@ -281,7 +283,7 @@ const getBenchmarkResultString = ({ datetime, benchmarkDetails, senderResult, re
   const messageLossPercent = messageLossCount / senderResult.messageCounter * 100;
 
   const benchmarkResultStr = `===== MQ BENCHMARK RESULT =====
-Name: ${benchmarkDetails.name || ''}
+Name: ${benchmarkDetails.name}
 ${datetimeStr}
 
 ${getBenchmarkDetailsString({ benchmarkDetails })}
@@ -379,7 +381,7 @@ switch (mq) {
         const message = crypto.randomBytes(messageSize);
         const messageLength = 8 + message.length;
         
-        if (messageCount) {
+        if (typeof messageCount === 'number') {
           for (let i = 0; i < messageCount; i++) {
             const timestampBuf = longToUint8Array(Date.now());
             sender.send(Buffer.concat([timestampBuf, message], messageLength));
@@ -389,7 +391,7 @@ switch (mq) {
               await usleep(delay);
             }
           }
-        } else if (duration) {
+        } else if (typeof duration === 'number') {
           const durationInSecond = duration * 1000;
           while (Date.now() - startTime < durationInSecond) {
             const timestampBuf = longToUint8Array(Date.now());
@@ -407,24 +409,24 @@ switch (mq) {
 
       } else if (mode === 'poisson') { // Poisson distribution
 
-        if (!avgSize && !avgDelay)
+        if (!(typeof avgSize === 'number') && !(typeof avgDelay === 'number'))
           console.log('\n===\nNo avgSize or avgDelay specified, will behave like uniform.\n===\n');
 
-        const message = crypto.randomBytes(avgSize ? avgSize * 2 : messageSize);
+        const message = crypto.randomBytes(typeof avgSize === 'number' ? avgSize * 2 : messageSize);
         var randomSize, randomDelay;
-        if (avgSize) randomSize = new PoissonObject(avgSize / 1024);
-        if (avgDelay) randomDelay = new PoissonObject(avgDelay);
+        if (typeof avgSize === 'number') randomSize = new PoissonObject(avgSize / 1024);
+        if (typeof avgDelay === 'number') randomDelay = new PoissonObject(avgDelay);
         let timestampBuf,
           messageLength,
           payloadLength,
-          counter = messageCount;
+          counter = typeof messageCount === 'number' ? messageCount : undefined;
 
         while (true) {
-          payloadLength = avgSize ? randomSize.sample() * 1024 : messageSize;
+          payloadLength = typeof avgSize === 'number' ? randomSize.sample() * 1024 : messageSize;
           messageLength = 8 + payloadLength;
           timestampBuf = longToUint8Array(Date.now());
 
-          if (avgDelay) {
+          if (typeof avgDelay === 'number') {
             //let sleepTime = randomDelay.sample();
             //let before = process.hrtime();
             await usleep(randomDelay.sample());
@@ -442,7 +444,7 @@ switch (mq) {
           if (counter) {
             if (--counter === 0) break;
           }
-          if (duration && duration * 1000 <= Date.now() - startTime) {
+          if (typeof duration === 'number' && duration * 1000 <= Date.now() - startTime) {
             break;
           }
         }
