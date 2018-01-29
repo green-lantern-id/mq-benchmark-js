@@ -1,5 +1,7 @@
 'use strict';
 
+const EventEmitter = require('events');
+
 const zmq = require('zeromq');
 
 const { sleep } = require('../../utils');
@@ -7,7 +9,7 @@ const { sleep } = require('../../utils');
 const testTopic = Buffer.from('test');
 const signalTopic = Buffer.from('signal');
 
-class ZeroMQReceiver {
+class ZeroMQReceiver extends EventEmitter {
   async setup({ bindIp, bindPort, brokerIp, brokerPort, messageHandler }) {
     this.sockPub = zmq.socket('pub');
     this.sockPub.bindSync(`tcp://${bindIp}:${bindPort}`);
@@ -40,6 +42,11 @@ class ZeroMQReceiver {
 
   sendResult(result) {
     this.sockPub.send([signalTopic, result]);
+  }
+
+  stopReceiving() {
+    this.sockSub.unsubscribe('');
+    this.emit('stopped');
   }
 
 }

@@ -272,7 +272,7 @@ Data received: ${result.dataReceived} KiB
 Avg latency: ${result.avgLatency} ms
 Throughput: ${result.throughput} msg/sec
 Throughput: ${result.throughputKiB} KiB/sec
-Receive Timeout: ${result.timeout} ${result.timeout ? `(${result.timeoutDuration} seconds)` : ''}
+Receive Timed out: ${result.timeout} ${result.timeout ? `(${result.timeoutDuration} seconds)` : ''}
 ${latenciesStr}
 ========================
 `;
@@ -323,7 +323,7 @@ Data received: ${receiverResult.dataReceived} KiB
 Avg latency: ${receiverResult.avgLatency} ms
 Throughput: ${receiverResult.throughput} msg/sec
 Throughput: ${receiverResult.throughputKiB} KiB/sec
-Receive Timeout: ${receiverResult.timeout} ${receiverResult.timeout ? `(${receiverResult.timeoutDuration} seconds)` : ''}
+Receive Timed out: ${receiverResult.timeout} ${receiverResult.timeout ? `(${receiverResult.timeoutDuration} seconds)` : ''}
 ${latenciesStr}
 ========================
 `;
@@ -550,6 +550,8 @@ switch (mq) {
         receiverPort: 20002,
       });
 
+      console.log('\n*****\nPlease restart the process before starting a new benchmark.\n*****\n');
+
       break;
     }
     case 'receiver': {
@@ -558,7 +560,6 @@ switch (mq) {
       let latencies = [];
       let sumSize = 0;
       let receiveTimeout = false;
-      let stopReceiving = false;
       let receiveTimeoutFn = null;
 
       const receiver = new Receiver();
@@ -568,8 +569,6 @@ switch (mq) {
         brokerIp: argv.brokerIp,
         brokerPort: 20001,
         messageHandler: async (msg) => {
-          if (stopReceiving === true) return;
-
           const timestamp = uint8ArrayToLong(msg.slice(0, 8)); // First 8 bytes is timestamp from sender
           
           if (timestamp === 0 && startTime === null) return;
@@ -585,57 +584,60 @@ switch (mq) {
             console.log(new Date(), '>>> START BENCHMARKING (First message received)');
 
             if (typeof duration === 'number') {
-              receiveTimeoutFn = setTimeout(() => receiveTimeout = true, duration * 1000);
+              receiveTimeoutFn = setTimeout(() => {
+                receiveTimeout = true;
+                receiver.stopReceiving();
+              }, duration * 1000);
             }
           }
 
-          if (timestamp === 0 || receiveTimeout === true) {
-            stopReceiving = true;
-            console.log(new Date(), `>>> FINISH BENCHMARKING (${receiveTimeout ? `Receive timeout => ${duration} seconds` : 'Last message received'})`);
-            const sumLatencies = latencies.reduce((a, b) => a + b, 0);
-            const timeUsed = Date.now() - startTime;
-
-            const result = {
-              messageCounter,
-              timeUsed,
-              dataReceived: sumSize / 1024,
-              avgLatency: sumLatencies / latencies.length,
-              throughput: messageCounter / timeUsed * 1000,
-              throughputKiB: (sumSize / 1024) / timeUsed * 1000,
-              latencies,
-              timeout: receiveTimeout,
-              timeoutDuration: duration,
-            };
-            
-            printReceiverResult(result, false);
-
-            appendReceiverResultToFile({
-              filepath: resultFilepath,
-              datetime: startTime,
-              benchmarkDetails,
-              result,
-            });
-
-            receiver.sendResult(Buffer.from(JSON.stringify(result)));
-
-            startTime = null;
-            sumSize = 0;
-            messageCounter = 0;
-            latencies = [];
-            receiveTimeout = false;
-            clearTimeout(receiveTimeoutFn);
-            receiveTimeoutFn = null;
-
-            await sleep(1000);
-
-            console.log('Please restart the process before starting a next benchmark.');
-
+          if (timestamp === 0) {
+            receiver.stopReceiving();
             return;
           }
 
           messageCounter++;
         },
       });
+
+      await new Promise(r => receiver.once('stopped', (result) => r(result)));
+
+      console.log(new Date(), `>>> FINISH BENCHMARKING (${receiveTimeout ? `Receive timed out => ${duration} seconds` : 'Last message received'})`);
+      const sumLatencies = latencies.reduce((a, b) => a + b, 0);
+      const timeUsed = Date.now() - startTime;
+
+      const result = {
+        messageCounter,
+        timeUsed,
+        dataReceived: sumSize / 1024,
+        avgLatency: sumLatencies / latencies.length,
+        throughput: messageCounter / timeUsed * 1000,
+        throughputKiB: (sumSize / 1024) / timeUsed * 1000,
+        latencies,
+        timeout: receiveTimeout,
+        timeoutDuration: duration,
+      };
+      
+      printReceiverResult(result, false);
+
+      appendReceiverResultToFile({
+        filepath: resultFilepath,
+        datetime: startTime,
+        benchmarkDetails,
+        result,
+      });
+
+      receiver.sendResult(Buffer.from(JSON.stringify(result)));
+
+      startTime = null;
+      sumSize = 0;
+      messageCounter = 0;
+      latencies = [];
+      receiveTimeout = false;
+      clearTimeout(receiveTimeoutFn);
+      receiveTimeoutFn = null;
+
+      console.log('*****\nPlease restart the process before starting a new benchmark.\n*****\n');
 
       break;
     }

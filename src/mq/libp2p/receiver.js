@@ -1,5 +1,7 @@
 'use strict';
 
+const EventEmitter = require('events');
+
 const bluebird = require('bluebird');
 
 const PeerId = require('peer-id');
@@ -11,7 +13,7 @@ const PEER_ID = require('./id-receiver');
 
 const { createNode } = require('./helpers');
 
-class LibP2PReceiver {
+class LibP2PReceiver extends EventEmitter {
   async setup({ bindIp, bindPort, messageHandler }) {
     this.node = await createNode(bindIp, bindPort, PEER_ID);
 
@@ -37,6 +39,11 @@ class LibP2PReceiver {
 
   sendResult(result) {
     this.fs.publish('signal', result);
+  }
+
+  stopReceiving() {
+    this.fs.unsubscribe('test');
+    this.emit('stopped');
   }
 
 }
