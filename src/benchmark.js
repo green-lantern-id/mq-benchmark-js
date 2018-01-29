@@ -11,7 +11,7 @@ const crypto = require('crypto');
 
 const yargs = require('yargs');
 
-const { longToUint8Array, uint8ArrayToLong, usleep } = require('./utils');
+const { longToUint8Array, uint8ArrayToLong, sleep, usleep } = require('./utils');
 
 // MQ libs
 const libp2pSender = require('./mq/libp2p/sender');
@@ -48,7 +48,7 @@ const argv = yargs
           })
           .option('duration', {
             alias: 'd',
-            describe: 'How long this test last in second (Default: 60000)',
+            describe: 'Duration of sender sending messages in seconds',
             type: 'number',
             // demandOption: true,
           })
@@ -81,7 +81,13 @@ const argv = yargs
         });
       })
       .command('receiver', 'receiver role', yargs => {
-        yargs.option('brokerIp', {
+        yargs.option('duration', {
+          alias: 'd',
+          describe: 'Duration until receiver stops receiving messages and end the benchmark in seconds.',
+          type: 'number',
+          // demandOption: true,
+        })
+        .option('brokerIp', {
           describe: 'broker node IP address',
           type: 'string',
           // demandOption: true,
@@ -194,7 +200,7 @@ const avgSize = argv.avgSize;
 const avgDelay = argv.avgDelay;
 const resultFilepath = argv.resultFilepath
   ? argv.resultFilepath
-  : role === 'sender' ? './mq_result.txt' : './mq_receiver_result.txt';
+  : role === 'sender' ? './mq_sender_result.txt' : './mq_receiver_result.txt';
 const name = argv.name;
 
 const benchmarkDetails = {
@@ -210,7 +216,14 @@ const benchmarkDetails = {
 };
 
 const printSenderResult = (result, benchmarkDetails) => {
-  console.log(`===== MQ BENCHMARK RESULT =====
+  console.log(getSenderResultString({
+    result,
+    benchmarkDetails,
+  }));
+};
+
+const getSenderResultString = ({ result, benchmarkDetails }) => {
+  return `===== MQ BENCHMARK RESULT =====
 Name: ${benchmarkDetails.name}
 
 ${getBenchmarkDetailsString({ benchmarkDetails })}
@@ -222,7 +235,7 @@ Throughput: ${result.throughput} msg/sec
 Throughput: ${result.throughputKiB} KiB/sec
 
 ========================
-`);
+`;
 };
 
 const printReceiverResult = (result, withLatencies) => {
@@ -252,6 +265,7 @@ Data received: ${result.dataReceived} KiB
 Avg latency: ${result.avgLatency} ms
 Throughput: ${result.throughput} msg/sec
 Throughput: ${result.throughputKiB} KiB/sec
+Receive Timeout: ${result.timeout} ${result.timeout ? `(${result.timeoutDuration} seconds)` : ''}
 ${latenciesStr}
 ========================
 `;
@@ -302,6 +316,7 @@ Data received: ${receiverResult.dataReceived} KiB
 Avg latency: ${receiverResult.avgLatency} ms
 Throughput: ${receiverResult.throughput} msg/sec
 Throughput: ${receiverResult.throughputKiB} KiB/sec
+Receive Timeout: ${receiverResult.timeout} ${receiverResult.timeout ? `(${receiverResult.timeoutDuration} seconds)` : ''}
 ${latenciesStr}
 ========================
 `;
@@ -322,6 +337,20 @@ const appendResultToFile = ({ filepath, datetime, benchmarkDetails, senderResult
     fs.appendFileSync(path.resolve(__dirname, filepath), `${stringToWrite}\n`);
   } catch (err) {
     console.error('Error appending result to file', err);
+  }
+};
+
+const appendSenderResultToFile = ({ filepath, datetime, benchmarkDetails, result }) => {
+  const stringToWrite = getSenderResultString({
+    datetime,
+    benchmarkDetails,
+    result,
+  });
+
+  try {
+    fs.appendFileSync(path.resolve(__dirname, filepath), `${stringToWrite}\n`);
+  } catch (err) {
+    console.error('Error appending sender result to file', err);
   }
 };
 
@@ -392,8 +421,8 @@ switch (mq) {
             }
           }
         } else if (typeof duration === 'number') {
-          const durationInSecond = duration * 1000;
-          while (Date.now() - startTime < durationInSecond) {
+          const durationInMilliseconds = duration * 1000;
+          while (Date.now() - startTime < durationInMilliseconds) {
             const timestampBuf = longToUint8Array(Date.now());
             sender.send(Buffer.concat([timestampBuf, message], messageLength));
             messageCounter++;
@@ -466,6 +495,13 @@ switch (mq) {
 
       printSenderResult(senderResult, benchmarkDetails);
 
+      appendSenderResultToFile({
+        filepath: resultFilepath,
+        datetime: startTime,
+        benchmarkDetails,
+        result: senderResult,
+      });
+
       const receiverResult = await receiverResultPromise;
 
       console.log(getBenchmarkResultString({
@@ -475,13 +511,13 @@ switch (mq) {
         receiverResult,
       }));
 
-      appendResultToFile({
-        filepath: resultFilepath,
-        datetime: startTime,
-        benchmarkDetails,
-        senderResult,
-        receiverResult,
-      });
+      // appendResultToFile({
+      //   filepath: resultFilepath,
+      //   datetime: startTime,
+      //   benchmarkDetails,
+      //   senderResult,
+      //   receiverResult,
+      // });
 
       console.log(new Date(), '[SENDER]:', 'Finished benchmarking.');
 
@@ -513,6 +549,9 @@ switch (mq) {
       let messageCounter = 0;
       let latencies = [];
       let sumSize = 0;
+      let receiveTimeout = false;
+      let stopReceiving = false;
+      let receiveTimeoutFn = null;
 
       const receiver = new Receiver();
       await receiver.setup({
@@ -520,7 +559,9 @@ switch (mq) {
         bindPort: 20002,
         brokerIp: argv.brokerIp,
         brokerPort: 20001,
-        messageHandler: msg => {
+        messageHandler: async (msg) => {
+          if (stopReceiving === true) return;
+
           const timestamp = uint8ArrayToLong(msg.slice(0, 8)); // First 8 bytes is timestamp from sender
           
           if (timestamp === 0 && startTime === null) return;
@@ -534,10 +575,15 @@ switch (mq) {
           if (messageCounter === 0) {
             startTime = timestamp;
             console.log(new Date(), '>>> START BENCHMARKING (First message received)');
+
+            if (typeof duration === 'number') {
+              receiveTimeoutFn = setTimeout(() => receiveTimeout = true, duration * 1000);
+            }
           }
 
-          if (timestamp === 0) {
-            console.log(new Date(), '>>> FINISH BENCHMARKING (Last message received)');
+          if (timestamp === 0 || receiveTimeout === true) {
+            stopReceiving = true;
+            console.log(new Date(), `>>> FINISH BENCHMARKING (${receiveTimeout ? `Receive timeout => ${duration} seconds` : 'Last message received'})`);
             const sumLatencies = latencies.reduce((a, b) => a + b, 0);
             const timeUsed = Date.now() - startTime;
 
@@ -549,6 +595,8 @@ switch (mq) {
               throughput: messageCounter / timeUsed * 1000,
               throughputKiB: (sumSize / 1024) / timeUsed * 1000,
               latencies,
+              timeout: receiveTimeout,
+              timeoutDuration: duration,
             };
             
             printReceiverResult(result, false);
@@ -560,12 +608,20 @@ switch (mq) {
               result,
             });
 
+            receiver.sendResult(Buffer.from(JSON.stringify(result)));
+
             startTime = null;
             sumSize = 0;
             messageCounter = 0;
             latencies = [];
+            receiveTimeout = false;
+            clearTimeout(receiveTimeoutFn);
+            receiveTimeoutFn = null;
 
-            receiver.sendResult(Buffer.from(JSON.stringify(result)));
+            await sleep(1000);
+
+            console.log('Please restart the process before starting a next benchmark.');
+
             return;
           }
 
