@@ -11,7 +11,7 @@ const crypto = require('crypto');
 
 const yargs = require('yargs');
 
-const { longToUint8Array, uint8ArrayToLong, usleep } = require('./utils');
+const { longToUint8Array, uint8ArrayToLong, usleep, sleep } = require('./utils');
 
 // MQ libs
 const libp2pSender = require('./mq/libp2p/sender');
@@ -125,6 +125,12 @@ const argv = yargs
               'message size to test in bytes (if avgSize is not specified)',
             type: 'number',
           })
+          .option('delayInMillisecond', {
+            //alias: 'ms',
+            describe:
+              'Flag to tell poisson to read avgDelay as millisecond',
+            type: 'boolean'
+          })
           // .option('brokerPort', {
           //   describe: 'broker port IP address',
           //   type: 'number',
@@ -192,6 +198,7 @@ const delay = argv.delay;
 const duration = argv.duration;
 const avgSize = argv.avgSize;
 const avgDelay = argv.avgDelay;
+const delayInMillisecond = argv.delayInMillisecond;
 const resultFilepath = argv.resultFilepath
   ? argv.resultFilepath
   : role === 'sender' ? './mq_result.txt' : './mq_receiver_result.txt';
@@ -429,7 +436,8 @@ switch (mq) {
           if (typeof avgDelay === 'number') {
             //let sleepTime = randomDelay.sample();
             //let before = process.hrtime();
-            await usleep(randomDelay.sample());
+            if(delayInMillisecond) await sleep(randomDelay.sample());
+            else await usleep(randomDelay.sample());
             //await usleep(sleepTime)
             //console.log(process.hrtime(before),sleepTime);
           }
