@@ -531,10 +531,9 @@ switch (mq) {
 
       // When using libp2p, somehow there is still a connection opened after closing
       // Need to explicitly exit the process
-      if (mq === 'libp2p') {
-        await sleep(1000);
-        process.exit(0);
-      }
+      // if (mq === 'libp2p') {
+      //   process.exit(0);
+      // }
 
       break;
     }
