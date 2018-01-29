@@ -16,7 +16,11 @@
 2. Run a receiver node
 
     ```
-    node src/benchmark.js <TEST_MODE> receiver --mq <MESSAGE_QUEUE_LIB> -d <RECEIVE_TIMEOUT_DURATION> -n <NAME> --resultFilepath <RESULT_FILEPATH>
+    node src/benchmark.js <TEST_MODE> receiver \
+         --mq <MESSAGE_QUEUE_LIB> \
+         -d <RECEIVE_TIMEOUT_DURATION> \
+         -n <NAME> \
+         --resultFilepath <RESULT_FILEPATH>
     ```
 
     **Example:**
@@ -150,6 +154,18 @@ Benchmark result will be printed to the console and written to files on sender a
       -e TEST_MODE='uniform' \
       -e ROLE='receiver' \
       -e MESSAGE_QUEUE='libp2p' \
+      -e NAME='Benchmark 1' \
+      -e RESULT_FILEPATH='/var/log/mq_receiver_result.txt' \
+      green-lantern/mq-benchmark-js:0.1
+    ```
+
+    ```
+    docker run -it --rm \
+      -v "$PWD"/logs:/var/log \
+      -e TEST_MODE='uniform' \
+      -e ROLE='receiver' \
+      -e MESSAGE_QUEUE='libp2p' \
+      -e DURATION='300'
       -e NAME='Benchmark 1' \
       -e RESULT_FILEPATH='/var/log/mq_receiver_result.txt' \
       green-lantern/mq-benchmark-js:0.1
