@@ -80,6 +80,7 @@ class LibP2PSender extends EventEmitter {
 
   async teardown() {
     this.stopSendWithRetry();
+    await this.node.hangUpAsync(this.brokerInfo);
     await this.fs.stopAsync();
     await this.node.stopAsync();
   }

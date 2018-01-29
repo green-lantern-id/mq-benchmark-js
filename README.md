@@ -165,7 +165,7 @@ Benchmark result will be printed to the console and written to files on sender a
       -e TEST_MODE='uniform' \
       -e ROLE='receiver' \
       -e MESSAGE_QUEUE='libp2p' \
-      -e DURATION='300'
+      -e DURATION='300' \
       -e NAME='Benchmark 1' \
       -e RESULT_FILEPATH='/var/log/mq_receiver_result.txt' \
       green-lantern/mq-benchmark-js:0.1
