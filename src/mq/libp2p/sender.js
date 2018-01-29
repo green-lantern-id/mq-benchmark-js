@@ -46,7 +46,7 @@ class LibP2PSender extends EventEmitter {
           const dataStr = msg.data.toString();
           const dataJSON = JSON.parse(dataStr);
 
-          await this.teardown();
+          // await this.teardown();
 
           this.emit('result', dataJSON);
 

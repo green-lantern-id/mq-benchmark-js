@@ -23,7 +23,7 @@ class ZeroMQSender extends EventEmitter {
         const dataStr = message.toString();
         const dataJSON = JSON.parse(dataStr);
         
-        this.teardown();
+        // this.teardown();
 
         this.emit('result', dataJSON);
       }

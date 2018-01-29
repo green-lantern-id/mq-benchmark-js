@@ -162,17 +162,11 @@ const argv = yargs
         // });
       })
       .command('receiver', 'receiver role', yargs => {
-        /*yargs.option('messageCount', {
-          alias: 'c',
-          describe: 'expected number of messages to receive',
-          type: 'number',
-        })
-        .option('duration', {
+        yargs.option('duration', {
           alias: 'd',
-          describe:
-            'How long this test last in second (Default will send message forever)',
+          describe: 'Duration until receiver stops receiving messages and end the benchmark in seconds.',
           type: 'number',
-        });*/
+        });
       })
       .demandCommand(1, 'You need to specifiy a role to test');
   })
@@ -526,6 +520,8 @@ switch (mq) {
       //   senderResult,
       //   receiverResult,
       // });
+
+      await sender.teardown();
 
       console.log(new Date(), '[SENDER]:', 'Finished benchmarking.');
 
