@@ -26,22 +26,22 @@ class LibP2PBroker {
     // console.log('[BROKER]:', 'Started!');
     
     this.nodeNetwork1.on('peer:connect', (peer) => {
-      console.log(new Date(), '[BROKER]:', 'SENDER node connected');
+      console.log(new Date(), '[BROKER]:', 'SOURCE node connected');
       this.senderNodeOnline = true;
     });
 
     this.nodeNetwork1.on('peer:disconnect', (peer) => {
-      console.log(new Date(), '[BROKER]:', 'SENDER node disconnected');
+      console.log(new Date(), '[BROKER]:', 'SOURCE node disconnected');
       this.senderNodeOnline = false;
     });
 
     this.nodeNetwork2.on('peer:connect', (peer) => {
-      console.log(new Date(), '[BROKER]:', 'RECEIVER node connected');
+      console.log(new Date(), '[BROKER]:', 'DESTINATION node connected');
       this.receiverNodeOnline = true;
     });
 
     this.nodeNetwork2.on('peer:disconnect', (peer) => {
-      console.log(new Date(), '[BROKER]:', 'RECEIVER node disconnected');
+      console.log(new Date(), '[BROKER]:', 'DESTINATION node disconnected');
       this.receiverNodeOnline = false;
     });
 

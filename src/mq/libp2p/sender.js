@@ -25,22 +25,22 @@ class LibP2PSender extends EventEmitter {
     // console.log('[SENDER]:', 'Started!');
     
     this.node.on('peer:connect', (peer) => {
-      console.log(new Date(), '[SENDER]:', 'BROKER node connected');
+      console.log(new Date(), '[SENDER]:', 'DESTINATION node connected');
     });
 
     this.node.on('peer:disconnect', (peer) => {
-      console.log(new Date(), '[SENDER]:', 'BROKER node disconnected');
+      console.log(new Date(), '[SENDER]:', 'DESTINATION node disconnected');
       // this.connect();
     });
 
-    this.brokerId = await PeerId.createFromJSONAsync(require('./id-broker'));
-    this.brokerInfo = await PeerInfo.createAsync(this.brokerId);
-    this.brokerInfo.multiaddrs.add(`/ip4/${destIp}/tcp/${destPort}`);
+    this.destId = await PeerId.createAsync();
+    this.destInfo = await PeerInfo.createAsync(this.destId);
+    this.destInfo.multiaddrs.add(`/ip4/${destIp}/tcp/${destPort}`);
 
     // Try to connect every 5 seconds until successful
     while (true) {
       try {
-        await this.node.dialAsync(this.brokerInfo);
+        await this.node.dialAsync(this.destInfo);
 
         this.fs.on('signal', async (msg) => {
           const dataStr = msg.data.toString();
@@ -80,7 +80,7 @@ class LibP2PSender extends EventEmitter {
 
   async teardown() {
     this.stopSendWithRetry();
-    await this.node.hangUpAsync(this.brokerInfo);
+    await this.node.hangUpAsync(this.destInfo);
     await this.fs.stopAsync();
     await this.node.stopAsync();
   }
