@@ -14,7 +14,7 @@ const { createNode } = require('./helpers');
 const { sleep } = require('../../utils');
 
 class LibP2PBroker {
-  async setup({ bindIpNetwork1, bindPortNetwork1, bindIpNetwork2, bindPortNetwork2, receiverIp, receiverPort }) {
+  async setup({ bindIpNetwork1, bindPortNetwork1, bindIpNetwork2, bindPortNetwork2, destIp, destPort }) {
     this.nodeNetwork1 = await createNode(bindIpNetwork1, bindPortNetwork1, PEER_ID);
     this.fsNetwork1 = new FloodSub(this.nodeNetwork1);
     await this.fsNetwork1.startAsync();
@@ -57,7 +57,7 @@ class LibP2PBroker {
 
     this.receiverId = await PeerId.createFromJSONAsync(require('./id-receiver'));
     this.receiverInfo = await PeerInfo.createAsync(this.receiverId);
-    this.receiverInfo.multiaddrs.add(`/ip4/${receiverIp}/tcp/${receiverPort}`);
+    this.receiverInfo.multiaddrs.add(`/ip4/${destIp}/tcp/${destPort}`);
 
     // Try to connect every 5 seconds until successful
     while (true) {

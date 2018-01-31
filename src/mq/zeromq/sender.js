@@ -10,12 +10,12 @@ const testTopic = Buffer.from('test');
 const signalTopic = Buffer.from('signal');
 
 class ZeroMQSender extends EventEmitter {
-  async setup({ bindIp, bindPort, brokerIp, brokerPort }) {
+  async setup({ bindIp, bindPort, destIp, destPort }) {
     this.sockPub = zmq.socket('pub');
     this.sockPub.bindSync(`tcp://${bindIp}:${bindPort}`);
 
     this.sockSub = zmq.socket('sub');
-    this.sockSub.connect(`tcp://${brokerIp}:${brokerPort}`);
+    this.sockSub.connect(`tcp://${destIp}:${destPort}`);
     this.sockSub.subscribe('');
 
     this.sockSub.on('message', (topic, message) => {
@@ -40,7 +40,7 @@ class ZeroMQSender extends EventEmitter {
     this.sockSub.close();
   }
 
-  send(message) {
+  async send(message) {
     this.sockPub.send([testTopic, message]);
   }
 

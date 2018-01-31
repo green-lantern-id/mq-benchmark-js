@@ -10,12 +10,12 @@ const testTopic = Buffer.from('test');
 const signalTopic = Buffer.from('signal');
 
 class ZeroMQReceiver extends EventEmitter {
-  async setup({ bindIp, bindPort, brokerIp, brokerPort, messageHandler }) {
+  async setup({ bindIp, bindPort, srcIp, srcPort, messageHandler }) {
     this.sockPub = zmq.socket('pub');
     this.sockPub.bindSync(`tcp://${bindIp}:${bindPort}`);
 
     this.sockSub = zmq.socket('sub');
-    this.sockSub.connect(`tcp://${brokerIp}:${brokerPort}`);
+    this.sockSub.connect(`tcp://${srcIp}:${srcPort}`);
     this.sockSub.subscribe('');
 
     this.sockSub.on('message', (topic, message) => {

@@ -27,8 +27,12 @@ CMD node /mq-benchmark-js/src/benchmark.js $TEST_MODE $ROLE \
     --delay $DELAY \
     --avgDelay $AVG_DELAY \
     --avgSize $AVG_SIZE \
-    --senderIp $SENDER_IP \
-    --brokerIp $BROKER_IP \
-    --receiverIp $RECEIVER_IP \
+    --bindPort $BIND_PORT \
+    --bindPortNetwork1 $BIND_PORT_NETWORK_1 \
+    --bindPortNetwork2 $BIND_PORT_NETWORK_2 \
+    --srcIp $SRC_IP \
+    --srcPort $SRC_PORT \
+    --destIp $DEST_IP \
+    --destPort $DEST_PORT \
     -n "$NAME" \
     --resultFilepath $RESULT_FILEPATH

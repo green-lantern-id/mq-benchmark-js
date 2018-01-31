@@ -16,7 +16,7 @@ const { createNode } = require('./helpers');
 const { sleep } = require('../../utils');
 
 class LibP2PSender extends EventEmitter {
-  async setup({ bindIp, bindPort, brokerIp, brokerPort }) {
+  async setup({ bindIp, bindPort, destIp, destPort }) {
     this.node = await createNode(bindIp, bindPort, PEER_ID);
 
     this.fs = new FloodSub(this.node);
@@ -35,7 +35,7 @@ class LibP2PSender extends EventEmitter {
 
     this.brokerId = await PeerId.createFromJSONAsync(require('./id-broker'));
     this.brokerInfo = await PeerInfo.createAsync(this.brokerId);
-    this.brokerInfo.multiaddrs.add(`/ip4/${brokerIp}/tcp/${brokerPort}`);
+    this.brokerInfo.multiaddrs.add(`/ip4/${destIp}/tcp/${destPort}`);
 
     // Try to connect every 5 seconds until successful
     while (true) {
@@ -85,7 +85,7 @@ class LibP2PSender extends EventEmitter {
     await this.node.stopAsync();
   }
 
-  send(message) {
+  async send(message) {
     this.fs.publish('test', message);
   }
 

@@ -8,19 +8,19 @@ const { sleep } = require('../../utils');
 // const signalTopic = Buffer.from('signal');
 
 class ZeroMQBroker {
-  async setup({ bindIpNetwork1, bindPortNetwork1, bindIpNetwork2, bindPortNetwork2, senderIp, senderPort, receiverIp, receiverPort }) {
+  async setup({ bindIpNetwork1, bindPortNetwork1, bindIpNetwork2, bindPortNetwork2, srcIp, srcPort, destIp, destPort }) {
     this.sockPubNetwork1 = zmq.socket('pub');
     this.sockPubNetwork1.bindSync(`tcp://${bindIpNetwork1}:${bindPortNetwork1}`);
 
     this.sockSubNetwork1 = zmq.socket('sub');
-    this.sockSubNetwork1.connect(`tcp://${senderIp}:${senderPort}`);
+    this.sockSubNetwork1.connect(`tcp://${srcIp}:${srcPort}`);
     this.sockSubNetwork1.subscribe('');
 
     this.sockPubNetwork2 = zmq.socket('pub');
     this.sockPubNetwork2.bindSync(`tcp://${bindIpNetwork2}:${bindPortNetwork2}`);
 
     this.sockSubNetwork2 = zmq.socket('sub');
-    this.sockSubNetwork2.connect(`tcp://${receiverIp}:${receiverPort}`);
+    this.sockSubNetwork2.connect(`tcp://${destIp}:${destPort}`);
     this.sockSubNetwork2.subscribe('');
     
     this.sockSubNetwork1.on('message', (topic, message) => {

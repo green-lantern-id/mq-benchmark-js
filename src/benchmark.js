@@ -52,32 +52,45 @@ const argv = yargs
             type: 'number',
             // demandOption: true,
           })
-          .option('brokerIp', {
-            describe: 'broker node IP address',
+          .option('bindPort', {
+            describe: 'Port to bind',
+            type: 'number',
+          })
+          .option('destIp', {
+            describe: 'destination node IP address',
             type: 'string',
             demandOption: true,
+          })
+          .option('destPort', {
+            describe: 'destination node port',
+            type: 'number',
           });
-        // .option('brokerPort', {
-        //   describe: 'broker port IP address',
-        //   type: 'number',
-        //   demandOption: true,
-        // });
       })
       .command('broker', 'broker role', yargs => {
-        yargs.option('receiverIp', {
-          describe: 'receiver node IP address',
+        yargs.option('bindPortNetwork1', {
+          describe: 'Port to bind on network 1',
+          type: 'number',
+        })
+        .option('bindPortNetwork2', {
+          describe: 'Port to bind on network 1',
+          type: 'number',
+        })
+        .option('destIp', {
+          describe: 'destination node IP address',
           type: 'string',
           demandOption: true,
         })
-        // .option('receiverPort', {
-        //   describe: 'receiver port IP address',
-        //   type: 'number',
-        //   demandOption: true,
-        // });
-        .option('senderIp', {
-          describe: 'sender node IP address',
+        .option('destPort', {
+          describe: 'destination node port',
+          type: 'number',
+        })
+        .option('srcIp', {
+          describe: 'source node IP address',
           type: 'string',
-          // demandOption: true,
+        })
+        .option('srcPort', {
+          describe: 'source node port',
+          type: 'number',
         });
       })
       .command('receiver', 'receiver role', yargs => {
@@ -87,10 +100,17 @@ const argv = yargs
           type: 'number',
           // demandOption: true,
         })
-        .option('brokerIp', {
-          describe: 'broker node IP address',
+        .option('bindPort', {
+          describe: 'Port to bind',
+          type: 'number',
+        })
+        .option('srcIp', {
+          describe: 'source node IP address',
           type: 'string',
-          // demandOption: true,
+        })
+        .option('srcPort', {
+          describe: 'source node port',
+          type: 'number',
         });
       })
       .demandCommand(1, 'You need to specifiy a role to test');
@@ -99,11 +119,6 @@ const argv = yargs
     yargs
       .command('sender', 'sender role', yargs => {
         yargs
-          .option('brokerIp', {
-            describe: 'broker node IP address',
-            type: 'string',
-            demandOption: true,
-          })
           .option('avgSize', {
             describe: 'Average message size in Byte',
             type: 'number',
@@ -137,11 +152,19 @@ const argv = yargs
               'Flag to tell poisson to read avgDelay as millisecond',
             type: 'boolean'
           })
-          // .option('brokerPort', {
-          //   describe: 'broker port IP address',
-          //   type: 'number',
-          //   demandOption: true,
-          // });
+          .option('bindPort', {
+            describe: 'Port to bind',
+            type: 'number',
+          })
+          .option('destIp', {
+            describe: 'destination node IP address',
+            type: 'string',
+            demandOption: true,
+          })
+          .option('destPort', {
+            describe: 'destination node port',
+            type: 'number',
+          })
           .check(function(argv) {
             if(argv.avgDelay && (argv.avgDelay > 1000 || argv.avgDelay < 1)) return false;
             if(!argv.messageSize && !argv.avgSize) return false;
@@ -150,21 +173,48 @@ const argv = yargs
           }, false);
       })
       .command('broker', 'broker role', yargs => {
-        yargs.option('receiverIp', {
-          describe: 'receiver node IP address',
+        yargs.option('bindPortNetwork1', {
+          describe: 'Port to bind on network 1',
+          type: 'number',
+        })
+        .option('bindPortNetwork2', {
+          describe: 'Port to bind on network 1',
+          type: 'number',
+        })
+        .option('destIp', {
+          describe: 'destination node IP address',
           type: 'string',
           demandOption: true,
+        })
+        .option('destPort', {
+          describe: 'destination node port',
+          type: 'number',
+        })
+        .option('srcIp', {
+          describe: 'source node IP address',
+          type: 'string',
+        })
+        .option('srcPort', {
+          describe: 'source node port',
+          type: 'string',
         });
-        // .option('receiverPort', {
-        //   describe: 'receiver port IP address',
-        //   type: 'number',
-        //   demandOption: true,
-        // });
       })
       .command('receiver', 'receiver role', yargs => {
         yargs.option('duration', {
           alias: 'd',
           describe: 'Duration until receiver stops receiving messages and end the benchmark in seconds.',
+          type: 'number',
+        })
+        .option('bindPort', {
+          describe: 'Port to bind',
+          type: 'number',
+        })
+        .option('srcIp', {
+          describe: 'source node IP address',
+          type: 'string',
+        })
+        .option('srcPort', {
+          describe: 'source node port',
           type: 'number',
         });
       })
@@ -392,12 +442,24 @@ switch (mq) {
   
   switch (role) {
     case 'sender': {
+      const bindIp = '0.0.0.0';
+      const bindPort =  argv.bindPort || 10001;
+      const destIp = argv.destIp;
+      const destPort = argv.destPort || 10002;
+
+      console.log(`Starting SENDER with parameters:
+Bind IP: ${bindIp}
+Bind Port: ${bindPort}
+Destination IP: ${destIp}
+Destination Port: ${destPort}
+`);
+
       const sender = new Sender();
       await sender.setup({
-        bindIp: '0.0.0.0',
-        bindPort: 10001,
-        brokerIp: argv.brokerIp,
-        brokerPort: 10002,
+        bindIp,
+        bindPort,
+        destIp,
+        destPort,
       });
 
       const receiverResultPromise = new Promise(r => sender.once('result', (result) => r(result)));
@@ -534,16 +596,36 @@ switch (mq) {
       break;
     }
     case 'broker': {
+      const bindIpNetwork1 = '0.0.0.0';
+      const bindPortNetwork1 = argv.bindPortNetwork1 || 10002;
+      const bindIpNetwork2 = '0.0.0.0';
+      const bindPortNetwork2 = argv.bindPortNetwork2 || 20001;
+      const srcIp = argv.srcIp;
+      const srcPort = argv.srcPort || 10001;
+      const destIp = argv.destIp;
+      const destPort = argv.destPort || 20002;
+
+      console.log(`Starting BROKER with parameters:
+Bind IP (Network 1): ${bindIpNetwork1}
+Bind Port (Network 1): ${bindPortNetwork1}
+Bind IP (Network 2): ${bindIpNetwork2}
+Bind Port (Network 2): ${bindPortNetwork2}
+Source IP (Network 1): ${srcIp}
+Source Port (Network 1): ${srcPort}
+Destination IP (Network 2): ${destIp}
+Destination Port (Network 2): ${destPort}
+`);
+
       const broker = new Broker();
       await broker.setup({
-        bindIpNetwork1: '0.0.0.0',
-        bindPortNetwork1: 10002,
-        bindIpNetwork2: '0.0.0.0',
-        bindPortNetwork2: 20001,
-        senderIp: argv.senderIp,
-        senderPort: 10001,
-        receiverIp: argv.receiverIp,
-        receiverPort: 20002,
+        bindIpNetwork1,
+        bindPortNetwork1,
+        bindIpNetwork2,
+        bindPortNetwork2,
+        srcIp,
+        srcPort,
+        destIp,
+        destPort,
       });
 
       console.log('\n*****\nPlease restart the process before starting a new benchmark.\n*****\n');
@@ -551,6 +633,18 @@ switch (mq) {
       break;
     }
     case 'receiver': {
+      const bindIp = '0.0.0.0';
+      const bindPort = argv.bindPort || 10002;
+      const srcIp = argv.srcIp;
+      const srcPort = argv.srcPort || 10001;
+
+      console.log(`Starting RECEIVER with parameters:
+Bind IP: ${bindIp}
+Bind Port: ${bindPort}
+Source IP: ${srcIp}
+Source Port: ${srcPort}
+`);
+
       let startTime = null;
       let messageCounter = 0;
       let latencies = [];
@@ -560,10 +654,10 @@ switch (mq) {
 
       const receiver = new Receiver();
       await receiver.setup({
-        bindIp: '0.0.0.0',
-        bindPort: 20002,
-        brokerIp: argv.brokerIp,
-        brokerPort: 20001,
+        bindIp,
+        bindPort,
+        srcIp,
+        srcPort,
         messageHandler: async (msg) => {
           const timestamp = uint8ArrayToLong(msg.slice(0, 8)); // First 8 bytes is timestamp from sender
           
