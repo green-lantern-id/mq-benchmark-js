@@ -28,9 +28,9 @@
 
     **Options:**
 
-    `bindPort`: (Default `10002`)
-    `srcIp`: Required only when using ZeroMQ
-    `srcPort`: (Default `10001`)
+    - `bindPort`: (Default `10002`)
+    - `srcIp`: Required only when using ZeroMQ
+    - `srcPort`: (Default `10001`)
 
     **Example:**
 
@@ -65,12 +65,12 @@
 
     **Options:**
 
-    `bindPortNetwork1`: (Default `10002`)
-    `bindPortNetwork2`: (Default `20001`)
-    `srcIp`: Required only when using ZeroMQ
-    `srcPort`: (Default `10001`)
-    `destIp`: Required
-    `destPort`: (Default `20002`)
+    - `bindPortNetwork1`: (Default `10002`)
+    - `bindPortNetwork2`: (Default `20001`)
+    - `srcIp`: Required only when using ZeroMQ
+    - `srcPort`: (Default `10001`)
+    - `destIp`: Required
+    - `destPort`: (Default `20002`)
 
     **Example:**
 
@@ -113,11 +113,11 @@
 
     **Options:**
 
-    `delay`: Delay between message transmissions in microseconds
+    - `delay`: Delay between message transmissions in microseconds
 
-    `bindPort`: (Default `10001`)
-    `destIp`: Required
-    `destPort`: (Default `10002`)
+    - `bindPort`: (Default `10001`)
+    - `destIp`: Required
+    - `destPort`: (Default `10002`)
 
     **Example:**
 
@@ -159,8 +159,8 @@
 
     **Options:**
 
-    `avgSize`: Average message size in bytes (min: 1024)
-    `avgDelay`: Average delay between sending messages in microseconds, (min: 1, max: 1000)
+    - `avgSize`: Average message size in bytes (min: 1024)
+    - `avgDelay`: Average delay between sending messages in microseconds, (min: 1, max: 1000)
 
     **Example:**
 
